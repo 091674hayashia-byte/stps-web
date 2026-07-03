@@ -1,0 +1,4 @@
+node_modules/
+data/user_menus.json
+*.log
+.env

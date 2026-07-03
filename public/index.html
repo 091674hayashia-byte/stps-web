@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STPS - 水泳練習プログラム</title>
+<style>
+  :root {
+    --blue: #1a6faf;
+    --blue-light: #e8f4fd;
+    --blue-dark: #0d4f80;
+    --green: #27ae60;
+    --orange: #e67e22;
+    --red: #e74c3c;
+    --gray: #95a5a6;
+    --bg: #f0f4f8;
+    --white: #ffffff;
+    --text: #2c3e50;
+    --border: #dce3ea;
+    --shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Meiryo', 'Yu Gothic', sans-serif; background: var(--bg); color: var(--text); }
+
+  /* ヘッダー */
+  header {
+    background: linear-gradient(135deg, var(--blue-dark), var(--blue));
+    color: white; padding: 0 24px;
+    display: flex; align-items: center; gap: 16px;
+    height: 60px; box-shadow: var(--shadow);
+    position: sticky; top: 0; z-index: 100;
+  }
+  header h1 { font-size: 20px; font-weight: bold; }
+  header .subtitle { font-size: 13px; opacity: 0.8; }
+
+  /* ナビ */
+  nav {
+    background: white; border-bottom: 2px solid var(--blue);
+    display: flex; gap: 4px; padding: 8px 24px;
+    position: sticky; top: 60px; z-index: 99;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  }
+  nav button {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 14px; font-weight: 500;
+    background: transparent; color: var(--gray); transition: all 0.2s;
+  }
+  nav button:hover { background: var(--blue-light); color: var(--blue); }
+  nav button.active { background: var(--blue); color: white; }
+
+  /* メインコンテンツ */
+  main { padding: 24px; max-width: 1200px; margin: 0 auto; }
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* カード */
+  .card {
+    background: white; border-radius: 12px;
+    padding: 20px; margin-bottom: 16px;
+    box-shadow: var(--shadow); border: 1px solid var(--border);
+  }
+  .card-title { font-size: 16px; font-weight: bold; color: var(--blue); margin-bottom: 16px; border-bottom: 2px solid var(--blue-light); padding-bottom: 8px; }
+
+  /* グリッド */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+
+  /* 統計カード */
+  .stat-card {
+    background: white; border-radius: 12px; padding: 20px;
+    text-align: center; box-shadow: var(--shadow);
+    border-top: 4px solid var(--blue);
+  }
+  .stat-card.green { border-top-color: var(--green); }
+  .stat-card.orange { border-top-color: var(--orange); }
+  .stat-card.red { border-top-color: var(--red); }
+  .stat-value { font-size: 32px; font-weight: bold; color: var(--text); }
+  .stat-label { font-size: 13px; color: var(--gray); margin-top: 4px; }
+
+  /* 検索バー */
+  .search-bar {
+    display: flex; gap: 12px; margin-bottom: 20px;
+    flex-wrap: wrap; align-items: center;
+  }
+  .search-bar input, .search-bar select {
+    padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-bar input:focus, .search-bar select:focus { border-color: var(--blue); }
+  .search-bar input[type="text"] { flex: 1; min-width: 200px; }
+
+  /* テーブル */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: var(--blue); color: white; padding: 10px 14px; text-align: left; white-space: nowrap; }
+  td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:hover td { background: var(--blue-light); }
+  tr:last-child td { border-bottom: none; }
+
+  /* バッジ */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 20px;
+    font-size: 12px; font-weight: bold; white-space: nowrap;
+  }
+  .badge-ae { background: #d5f5e3; color: #1e8449; }
+  .badge-en1 { background: #d6eaf8; color: #1a5276; }
+  .badge-en2 { background: #d4e6f1; color: #154360; }
+  .badge-en3 { background: #d0def0; color: #1b3d6e; }
+  .badge-an1 { background: #fde8d8; color: #a04000; }
+  .badge-an2 { background: #fcd7c4; color: #922b21; }
+  .badge-an3 { background: #f9c0b3; color: #7b241c; }
+  .badge-user { background: #fef9e7; color: #9a7d0a; border: 1px solid #f9e79f; }
+
+  /* ボタン */
+  .btn {
+    padding: 10px 20px; border: none; border-radius: 8px;
+    cursor: pointer; font-size: 14px; font-weight: 500; transition: all 0.2s;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: var(--blue-dark); }
+  .btn-success { background: var(--green); color: white; }
+  .btn-success:hover { background: #219a52; }
+  .btn-danger { background: var(--red); color: white; font-size: 12px; padding: 6px 12px; }
+  .btn-danger:hover { background: #c0392b; }
+  .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+  /* フォーム */
+  .form-group { margin-bottom: 16px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 14px; outline: none; font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,111,175,0.1); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* ページネーション */
+  .pagination { display: flex; gap: 8px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
+  .pagination button {
+    padding: 8px 14px; border: 1px solid var(--border); border-radius: 6px;
+    background: white; cursor: pointer; font-size: 14px; transition: all 0.2s;
+  }
+  .pagination button:hover { background: var(--blue-light); }
+  .pagination button.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+  /* チャート */
+  .chart-container { position: relative; height: 240px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 6px; height: 200px; padding: 0 8px; }
+  .bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .bar { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; transition: height 0.5s ease; cursor: pointer; }
+  .bar:hover { background: var(--blue-dark); }
+  .bar-label { font-size: 11px; color: var(--gray); text-align: center; }
+  .bar-val { font-size: 10px; color: var(--text); font-weight: bold; }
+
+  /* 練習詳細モーダル */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white; border-radius: 16px; padding: 28px;
+    max-width: 600px; width: 90%; max-height: 80vh;
+    overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+  .modal-title { font-size: 18px; font-weight: bold; color: var(--blue); }
+  .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--gray); }
+
+  /* 練習メニュービルダー */
+  .menu-builder { border: 2px dashed var(--border); border-radius: 12px; padding: 16px; min-height: 120px; }
+  .menu-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px; background: var(--blue-light);
+    border-radius: 8px; margin-bottom: 8px; border-left: 4px solid var(--blue);
+  }
+  .menu-item .item-name { flex: 1; font-size: 14px; }
+  .menu-item .item-dist { font-weight: bold; color: var(--blue); white-space: nowrap; }
+
+  /* ローディング */
+  .loading { text-align: center; padding: 40px; color: var(--gray); }
+  .empty { text-align: center; padding: 40px; color: var(--gray); font-size: 15px; }
+
+  /* カレンダー */
+  .cal-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+  .cal-nav { display:flex; gap:8px; align-items:center; }
+  .cal-nav button { background:var(--blue-light); border:none; border-radius:6px; padding:6px 14px; cursor:pointer; font-size:16px; color:var(--blue); font-weight:bold; }
+  .cal-nav button:hover { background:var(--blue); color:white; }
+  .cal-month { font-size:18px; font-weight:bold; color:var(--text); min-width:140px; text-align:center; }
+  .cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .cal-dow { text-align:center; font-size:12px; font-weight:bold; padding:6px 0; border-radius:4px; }
+  .cal-dow.mon,.cal-dow.tue,.cal-dow.wed,.cal-dow.thu,.cal-dow.fri { color:var(--text); background:#f5f5f5; }
+  .cal-dow.sat { color:#2471a3; background:#eaf4fd; }
+  .cal-dow.sun { color:#c0392b; background:#fdf0ee; }
+  .cal-day {
+    min-height:64px; border-radius:8px; padding:4px; cursor:pointer;
+    border:1px solid var(--border); background:white; position:relative;
+    transition:all 0.15s;
+  }
+  .cal-day:hover { border-color:var(--blue); box-shadow:0 2px 6px rgba(26,111,175,0.15); }
+  .cal-day.other-month { background:#fafafa; opacity:0.45; cursor:default; }
+  .cal-day.today { border-color:var(--blue); border-width:2px; }
+  .cal-day.selected { background:var(--blue); color:white; }
+  .cal-day.selected .cal-day-num { color:white; }
+  .cal-day.has-data { background:#e8f4fd; }
+  .cal-day.has-data:hover { background:#d0eaf8; }
+  .cal-day.selected.has-data { background:var(--blue); }
+  .cal-day-num { font-size:13px; font-weight:bold; color:var(--text); }
+  .cal-day.sat .cal-day-num { color:#2471a3; }
+  .cal-day.sun .cal-day-num { color:#c0392b; }
+  .cal-day-dot { display:flex; flex-wrap:wrap; gap:2px; margin-top:3px; }
+  .cal-dot { width:7px; height:7px; border-radius:50%; background:var(--blue); }
+  .cal-day-dist { font-size:10px; color:var(--blue); font-weight:bold; margin-top:2px; }
+  .cal-day.selected .cal-dot { background:white; }
+  .cal-day.selected .cal-day-dist { color:rgba(255,255,255,0.9); }
+  .view-toggle { display:flex; gap:4px; }
+  .view-toggle button { padding:6px 14px; border:1px solid var(--border); border-radius:6px; background:white; cursor:pointer; font-size:13px; }
+  .view-toggle button.active { background:var(--blue); color:white; border-color:var(--blue); }
+  .cal-detail { margin-top:16px; border-top:2px solid var(--blue-light); padding-top:16px; display:none; }
+  .cal-detail.open { display:block; }
+  .cal-detail-title { font-size:15px; font-weight:bold; color:var(--blue); margin-bottom:0; }
+
+  /* 週ビュー */
+  .week-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+  .week-col { border:1px solid var(--border); border-radius:8px; overflow:hidden; display:flex; flex-direction:column; }
+  .week-col-header { padding:6px 4px; text-align:center; font-size:12px; font-weight:bold; background:#f5f5f5; cursor:pointer; flex-shrink:0; }
+  .week-col-header:hover { background:var(--blue-light); }
+  .week-col-header.today { background:var(--blue); color:white; }
+  .week-col-header.sat { color:#2471a3; }
+  .week-col-header.sun { color:#c0392b; }
+  .week-col-header.today.sat,.week-col-header.today.sun { color:white; }
+  .week-ampm-row { display:flex; flex-direction:column; flex:1; }
+  .week-slot { flex:1; min-height:120px; padding:4px; border-top:1px solid var(--border); position:relative; }
+  .week-slot:first-child { border-top:none; }
+  .week-slot-label { font-size:9px; font-weight:bold; color:var(--gray); margin-bottom:2px; letter-spacing:1px; }
+  .week-slot.am { background:#fafcff; }
+  .week-slot.pm { background:#fffaf5; }
+  .week-menu-card { background:var(--blue-light); border-radius:4px; padding:4px 5px; margin-bottom:3px; font-size:11px; cursor:pointer; border-left:3px solid var(--blue); }
+  .week-menu-card.pm-card { background:#fff0e0; border-left-color:#e67e22; }
+  .week-menu-card:hover { filter:brightness(0.95); }
+  .week-menu-card .wm-dist { font-weight:bold; color:var(--blue); font-size:12px; }
+  .week-menu-card.pm-card .wm-dist { color:#e67e22; }
+  .week-menu-card .wm-name { color:#444; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .week-menu-card .wm-ex { color:#666; font-size:10px; margin-top:2px; }
+  .week-add-btn { position:absolute; bottom:3px; right:3px; }
+  .week-empty { font-size:10px; color:#ccc; text-align:center; padding:8px 0; }
+
+  /* 日ビュー */
+  .day-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px; }
+  .day-title { font-size:20px; font-weight:bold; color:var(--text); }
+  .day-no-data { text-align:center; padding:40px; color:var(--gray); font-size:15px; }
+
+  /* ---- ブラウザ内メニュー詳細表示 ---- */
+  .md-menu-block { border:1px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:12px; }
+  .md-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px; }
+  .md-header-left { font-size:15px; font-weight:700; color:var(--text); }
+  .md-header-sub { font-size:12px; color:var(--gray); }
+  .md-table { width:100%; border-collapse:collapse; }
+  .md-table td { vertical-align:top; padding:4px 6px; font-size:13px; border-bottom:1px solid var(--blue-light); }
+  .md-table tr:last-child td { border-bottom:none; }
+  .md-td-cat { width:58px; font-weight:700; white-space:nowrap; color:var(--blue); }
+  .md-td-main { }
+  .md-td-right { width:130px; text-align:right; font-size:12px; color:var(--gray); white-space:nowrap; }
+  .md-menu-name { font-weight:600; }
+  .md-cycle { color:#666; font-size:12px; margin-left:8px; }
+  .md-content { font-size:11px; color:#666; padding-left:2px; margin-top:2px; line-height:1.3; }
+  .md-int-wrap { display:flex; justify-content:center; margin:10px 0 6px; overflow-x:auto; }
+  .md-int-table { border-collapse:collapse; min-width:280px; }
+  .md-int-table th { background:var(--blue-light); color:var(--blue); font-weight:700; font-size:12px; padding:4px 10px; border:1px solid var(--border); text-align:center; }
+  .md-int-table td { font-size:13px; font-weight:600; padding:4px 10px; border:1px solid var(--border); text-align:center; }
+  .md-footer { display:flex; justify-content:center; gap:24px; margin-top:8px; padding:8px 0; background:var(--blue-light); border-radius:8px; }
+  .md-footer-item { text-align:center; }
+  .md-footer-val { font-size:18px; font-weight:700; color:var(--blue); }
+  .md-footer-label { font-size:11px; color:var(--gray); }
+
+  /* 通知 */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--green); color: white;
+    padding: 14px 20px; border-radius: 10px;
+    font-size: 14px; box-shadow: var(--shadow);
+    transform: translateY(100px); opacity: 0;
+    transition: all 0.3s; z-index: 9999;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--red); }
+
+  /* 内容セル展開 */
+  .mat-content-cell { transition: all 0.2s; }
+  .mat-content-cell.expanded {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    max-width: 400px !important;
+    background: #fffde7;
+    border-radius: 4px;
+    padding: 4px 6px;
+    cursor: zoom-out;
+    word-break: break-all;
+  }
+
+  @media (max-width: 768px) {
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+    main { padding: 12px; }
+  }
+
+  /* ==================== 印刷プレビュー ==================== */
+  .print-preview {
+    font-family: 'MS Gothic', 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #000;
+    background: #fff;
+    padding: 20px;
+  }
+
+  /* ---- 1件詳細レイアウト ---- */
+  .pm-header {
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 14px;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #000;
+    padding-bottom: 6px;
+  }
+  .pm-note { font-size: 12px; color: #444; margin-bottom: 10px; }
+  .pm-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+  .pm-table td { vertical-align: top; padding: 2px 4px; border: none; font-size: 13px; }
+  .pm-td-cat  { width: 66px; font-weight: bold; white-space: nowrap; padding-top: 3px; }
+  .pm-td-main { width: auto; }
+  .pm-td-right { width: 140px; text-align: right; white-space: nowrap; font-size: 12px; color: #222; padding-top: 3px; }
+  .pm-menu-line { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+  .pm-menu-name { font-weight: bold; }
+  .pm-cycle { color: #555; font-size: 12px; }
+  .pm-content { padding-left: 66px; font-size: 11px; color: #444; margin-bottom: 4px; line-height:1.4; }
+  .pm-sep { border: none; border-top: 1px solid #ccc; margin: 6px 0; }
+
+  .pm-int-wrap { display: flex; justify-content: center; margin: 14px 0 10px; }
+  .pm-int-table { border-collapse: collapse; }
+  .pm-int-table th, .pm-int-table td {
+    border: 1px solid #000;
+    padding: 4px 12px;
+    text-align: center;
+    font-size: 13px;
+  }
+  .pm-int-table th { background: #f0f0f0; font-weight: bold; }
+  .pm-footer { text-align: center; margin-top: 8px; font-size: 14px; line-height: 1.8; }
+
+  /* ---- 1件詳細テーブル ---- */
+  .ps-date { font-size: 18px; font-weight: bold; letter-spacing: 1px; }
+  .ps-sub  { font-size: 13px; color: #444; margin-top: 2px; letter-spacing: 1px; }
+  .ps-table {
+    width: 100%; border-collapse: collapse;
+    margin: 12px 0;
+    font-family: 'MS Gothic', 'Courier New', monospace;
+    font-size: 13px;
+  }
+  .ps-table thead tr { background: #f0f0f0; }
+  .ps-table th {
+    padding: 5px 6px; text-align: center;
+    border: 1px solid #999; font-size: 12px;
+  }
+  .ps-table td {
+    padding: 4px 6px; vertical-align: top;
+    border: 1px solid #ccc;
+  }
+  .ps-table tbody tr:nth-child(even) { background: #fafafa; }
+  .ps-cat  { width: 60px; font-weight: bold; text-align: center; white-space: nowrap; }
+  .ps-main { min-width: 160px; }
+  .ps-name { font-weight: 600; }
+  .ps-content { font-size: 11px; color: #555; padding-left: 2px; margin-top: 2px; line-height: 1.3; }
+  .ps-num  { width: 72px; text-align: center; white-space: nowrap; }
+  .ps-int  { width: 100px; text-align: center; white-space: nowrap; }
+  .ps-cum  { background: #eef4ff; font-weight: 600; color: #1a5fb4; }
+  .ps-badge {
+    display: inline-block; padding: 1px 6px; border-radius: 4px;
+    font-size: 11px; font-weight: bold; color: #fff;
+  }
+  .ps-badge.badge-ae  { background:#27ae60; }
+  .ps-badge.badge-en1 { background:#2980b9; }
+  .ps-badge.badge-en2 { background:#3498db; }
+  .ps-badge.badge-en3 { background:#2471a3; }
+  .ps-badge.badge-an1 { background:#e67e22; }
+  .ps-badge.badge-an2 { background:#e74c3c; }
+  .ps-badge.badge-an3 { background:#c0392b; }
+  .ps-hr { font-size: 11px; color: #555; }
+
+  /* ---- 6件グリッドレイアウト ---- */
+  .pm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pm-cell {
+    border: 1px solid #888;
+    padding: 6px 8px;
+    font-size: 10px;
+    font-family: 'MS Gothic','Courier New',monospace;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    overflow: hidden;
+  }
+  .pm-cell-header {
+    font-weight: bold;
+    font-size: 11px;
+    border-bottom: 1px solid #000;
+    padding-bottom: 3px;
+    margin-bottom: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .pm-cell table { width: 100%; border-collapse: collapse; }
+  .pm-cell td { vertical-align: top; padding: 1px 2px; font-size: 10px; line-height: 1.3; }
+  .pm-cell .c-cat { width: 44px; font-weight: bold; white-space: nowrap; }
+  .pm-cell .c-right { width: 90px; text-align: right; font-size: 9px; color: #333; }
+  .pm-cell .c-sub { font-size: 9px; color: #555; padding-left: 44px; line-height: 1.2; }
+  .pm-cell-int { border-collapse: collapse; margin: 3px auto 2px; }
+  .pm-cell-int th, .pm-cell-int td {
+    border: 1px solid #000; padding: 1px 4px;
+    text-align: center; font-size: 9px;
+  }
+  .pm-cell-footer { text-align: center; font-size: 10px; margin-top: 3px; border-top: 1px solid #ccc; padding-top: 2px; }
+  /* 印刷グリッド（A4縦2列） */
+  .pm-grid-1 { display: block; }
+  .pm-grid-2,
+  .pm-grid-3,
+  .pm-grid-4,
+  .pm-grid-5,
+  .pm-grid-6 { column-count: 2; column-gap: 10px; }
+
+  @media print {
+    @page { size: A4 portrait; margin: 10mm; }
+
+    /* 印刷モーダル以外すべて非表示 */
+    body > header,
+    body > nav,
+    body > main,
+    #modal-print .modal-header,
+    .no-print { display: none !important; }
+
+    /* sticky/fixed 要素を無効化 */
+    header, nav { position: static !important; }
+
+    /* 印刷モーダル以外のオーバーレイをすべて隠す */
+    .modal-overlay { display: none !important; }
+
+    /* 印刷モーダルだけ表示 */
+    #modal-print {
+      display: block !important;
+      position: static !important;
+      background: none !important;
+    }
+    #modal-print .modal {
+      position: static !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      width: 100% !important;
+      max-width: none !important;
+      max-height: none !important;
+      padding: 0 !important;
+      overflow: visible !important;
+    }
+    #print-content {
+      padding: 0 !important;
+    }
+
+    /* 色・背景を強制印刷 */
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      color-adjust: exact !important;
+    }
+
+    /* テーブル・バッジを印刷対応 */
+    .ps-table { font-size: 11px; }
+    .ps-table th { background: #e8e8e8 !important; color: #000 !important; }
+    .ps-table tbody tr:nth-child(even) { background: #f5f5f5 !important; }
+    .ps-cum { background: #d0e4ff !important; color: #000 !important; }
+    .ps-badge { color: #fff !important; padding: 1px 5px !important; }
+    .ps-badge.badge-ae  { background: #27ae60 !important; }
+    .ps-badge.badge-en1 { background: #2980b9 !important; }
+    .ps-badge.badge-en2 { background: #3498db !important; }
+    .ps-badge.badge-en3 { background: #2471a3 !important; }
+    .ps-badge.badge-an1 { background: #e67e22 !important; }
+    .ps-badge.badge-an2 { background: #e74c3c !important; }
+    .ps-badge.badge-an3 { background: #c0392b !important; }
+    .pm-int-table th { background: #e8e8e8 !important; }
+    .pm-footer { color: #000 !important; }
+
+    .pm-grid-1,.pm-grid-2,.pm-grid-3,.pm-grid-4,.pm-grid-5,.pm-grid-6 { gap: 4px !important; }
+    .pm-cell { border: 1px solid #555 !important; }
+    /* 6枚をA4一枚に収める */
+    .pm-grid-6 .pm-cell,
+    .pm-grid-5 .pm-cell { font-size: 9px !important; }
+    .pm-grid-6 .pm-cell td,
+    .pm-grid-5 .pm-cell td { font-size: 9px !important; padding: 0px 2px !important; }
+    .pm-grid-6 .pm-cell-header,
+    .pm-grid-5 .pm-cell-header { font-size: 10px !important; padding-bottom: 2px !important; margin-bottom: 3px !important; }
+    .pm-grid-6 .pm-cell-int th,
+    .pm-grid-6 .pm-cell-int td,
+    .pm-grid-5 .pm-cell-int th,
+    .pm-grid-5 .pm-cell-int td { font-size: 8px !important; padding: 1px 3px !important; }
+    .pm-grid-6 .c-sub,
+    .pm-grid-5 .c-sub { font-size: 8px !important; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>🏊</div>
+  <div>
+    <h1>STPS 水泳練習プログラム</h1>
+    <div class="subtitle">Swimming Training Program System</div>
+  </div>
+</header>
+
+<nav>
+  <button class="active" onclick="showPage('dashboard')">📊 ダッシュボード</button>
+  <button onclick="showPage('journal')">📅 カレンダー</button>
+
+  <button onclick="showPage('builder')">✏️ メニュー作成</button>
+  <button onclick="showPage('material')">📝 材料作成</button>
+</nav>
+
+<main>
+
+<!-- ダッシュボード -->
+<div id="page-dashboard" class="page active">
+  <div class="grid-4" id="stat-cards" style="margin-bottom:20px">
+    <div class="stat-card"><div class="stat-value" id="stat-total">-</div><div class="stat-label">総練習回数</div></div>
+    <div class="stat-card green"><div class="stat-value" id="stat-dist">-</div><div class="stat-label">総距離 (km)</div></div>
+    <div class="stat-card orange"><div class="stat-value" id="stat-time">-</div><div class="stat-label">総時間 (時間)</div></div>
+    <div class="stat-card red"><div class="stat-value" id="stat-year">-</div><div class="stat-label">今年の練習回数</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">📈 年別練習距離 (km)</div>
+      <div id="chart-yearly"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 最近の練習</div>
+      <div id="recent-list" class="loading">読み込み中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 練習日誌 -->
+<div id="page-journal" class="page">
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div class="card-title" style="margin:0">📅 練習日誌</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <div class="view-toggle">
+          <button class="active" id="btn-cal-view" onclick="setJournalView('calendar')">📅 カレンダー</button>
+          <button id="btn-list-view" onclick="setJournalView('list')">📋 リスト</button>
+        </div>
+        <button class="btn btn-success" onclick="openNewMenuModal()">＋ 新規記録</button>
+        <button class="btn btn-sm" style="background:var(--blue-light);color:var(--blue)" onclick="openPrintSelectModal()">🖨️ 印刷するメニューを選択</button>
+      </div>
+    </div>
+
+    <!-- カレンダービュー -->
+    <div id="journal-calendar-view">
+      <!-- ビュー切替 + ナビ -->
+      <div class="cal-header">
+        <div class="cal-nav">
+          <button onclick="calNavMove(-1)">‹</button>
+          <div class="cal-month" id="cal-month-label"></div>
+          <button onclick="calNavMove(1)">›</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <div class="view-toggle">
+            <button id="btn-cal-month" class="active" onclick="setCalView('month')">月</button>
+            <button id="btn-cal-week"  onclick="setCalView('week')">週</button>
+            <button id="btn-cal-day"   onclick="setCalView('day')">日</button>
+          </div>
+          <button class="btn" style="background:var(--blue-light);color:var(--blue);font-size:13px" onclick="calToday()">今日</button>
+        </div>
+      </div>
+
+      <!-- 月ビュー -->
+      <div id="cal-view-month">
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-detail" id="cal-detail">
+          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+            <div class="cal-detail-title" id="cal-detail-title" style="margin:0"></div>
+            <button class="btn btn-primary btn-sm" id="cal-detail-edit-btn" onclick="openBuilderForDate()">✏️ この日のメニューを作成</button>
+          </div>
+          <div id="cal-detail-body"></div>
+        </div>
+      </div>
+
+      <!-- 週ビュー -->
+      <div id="cal-view-week" style="display:none">
+        <div id="cal-week-grid"></div>
+      </div>
+
+      <!-- 日ビュー -->
+      <div id="cal-view-day" style="display:none">
+        <div id="cal-day-content"></div>
+      </div>
+    </div>
+
+    <!-- リストビュー -->
+    <div id="journal-list-view" style="display:none">
+      <div class="search-bar">
+        <input type="text" id="journal-search" placeholder="キーワードで検索..." oninput="filterJournal()">
+        <select id="journal-year" onchange="filterJournal()">
+          <option value="">全年</option>
+        </select>
+        <select id="journal-month" onchange="filterJournal()">
+          <option value="">全月</option>
+          <option value="1">1月</option><option value="2">2月</option><option value="3">3月</option>
+          <option value="4">4月</option><option value="5">5月</option><option value="6">6月</option>
+          <option value="7">7月</option><option value="8">8月</option><option value="9">9月</option>
+          <option value="10">10月</option><option value="11">11月</option><option value="12">12月</option>
+        </select>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>日付</th><th>距離</th><th>時間</th><th>一言</th><th>強度分布</th><th>操作</th>
+          </tr></thead>
+          <tbody id="journal-tbody">
+            <tr><td colspan="6" class="loading">読み込み中...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="journal-pagination"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- メニュー作成 -->
+<div id="page-builder" class="page">
+  <div class="grid-2" style="align-items:start">
+
+    <!-- 左：作成中のメニュー -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div class="card-title" style="margin:0">✏️ メニュー作成</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-primary btn-sm" onclick="saveBuilderAsMenu()">📥 日誌に保存</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="clearBuilder()">クリア</button>
+        </div>
+      </div>
+
+      <!-- 日付・コメント -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:6px">
+          <label style="font-weight:600;white-space:nowrap">練習日</label>
+          <input type="date" id="builder-date" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <label style="font-weight:600;white-space:nowrap">時間帯</label>
+          <select id="builder-ampm" style="padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px">
+            <option value="AM">AM（午前）</option>
+            <option value="PM">PM（午後）</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:160px">
+          <label style="font-weight:600;white-space:nowrap">一言</label>
+          <input type="text" id="builder-note" placeholder="コメント（任意）" style="flex:1;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:14px">
+        </div>
+      </div>
+
+      <!-- 追加済み練習テーブル -->
+      <div class="table-wrap" style="max-height:420px;overflow-y:auto">
+        <table id="builder-menu-table">
+          <thead>
+            <tr>
+              <th style="min-width:52px">種目</th>
+              <th>練習名</th>
+              <th>内容</th>
+              <th>サイクル</th>
+              <th>距離</th>
+              <th>時間</th>
+              <th>強度</th>
+              <th style="width:36px"></th>
+            </tr>
+          </thead>
+          <tbody id="builder-menu-tbody">
+            <tr><td colspan="8" class="empty" id="builder-empty">右のライブラリから練習を追加してください</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 合計 -->
+      <div style="margin-top:12px;padding:10px 14px;background:var(--blue-light);border-radius:8px;display:flex;gap:24px;flex-wrap:wrap">
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-weight:600">合計距離</span>
+          <span id="builder-total-dist" style="font-size:18px;font-weight:700;color:var(--blue)">0 m</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-weight:600">予想時間</span>
+          <span id="builder-total-time" style="font-size:18px;font-weight:700;color:var(--blue)">0 分</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="font-weight:600">種目数</span>
+          <span id="builder-total-count" style="font-size:18px;font-weight:700;color:var(--blue)">0</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 右：ライブラリから選択 -->
+    <div class="card">
+      <div class="card-title">📚 ライブラリから選択</div>
+      <div class="search-bar" style="flex-wrap:wrap;gap:6px">
+        <input type="text" id="builder-search" placeholder="キーワード検索..." oninput="filterBuilder()" style="min-width:120px;flex:1">
+        <select id="builder-category" onchange="filterBuilder()" style="flex:1;min-width:90px">
+          <option value="">全種目</option>
+        </select>
+        <select id="builder-distance" onchange="filterBuilder()" style="flex:1;min-width:90px">
+          <option value="">全距離</option>
+        </select>
+        <select id="builder-intensity" onchange="filterBuilder()" style="flex:1;min-width:90px">
+          <option value="">全強度</option>
+        </select>
+        <select id="builder-bunrui" onchange="filterBuilder()" style="flex:1;min-width:90px">
+          <option value="">全分類</option>
+        </select>
+        <select id="builder-sort" onchange="filterBuilder()" style="flex:1;min-width:100px">
+          <option value="id_desc">新しい順（NO↓）</option>
+          <option value="id_asc">古い順（NO↑）</option>
+          <option value="dist_desc">距離が多い順</option>
+          <option value="dist_asc">距離が少ない順</option>
+          <option value="time_desc">時間が長い順</option>
+          <option value="time_asc">時間が短い順</option>
+        </select>
+        <select id="builder-limit" onchange="filterBuilder()" style="flex:1;min-width:80px">
+          <option value="50">50件表示</option>
+          <option value="10">10件表示</option>
+          <option value="100">100件表示</option>
+          <option value="0">全件</option>
+        </select>
+      </div>
+      <div class="table-wrap" style="max-height:500px;overflow-y:auto">
+        <table>
+          <thead><tr><th>NO</th><th>練習</th><th>内容</th><th>サイクル</th><th>距離</th><th>強度</th><th></th></tr></thead>
+          <tbody id="builder-library-tbody"></tbody>
+        </table>
+      </div>
+      <div style="font-size:12px;color:var(--gray);margin-top:6px" id="builder-count"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 材料作成 -->
+<div id="page-material" class="page">
+  <div class="grid-2" style="align-items:start">
+    <!-- 左：入力フォーム -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div class="card-title" style="margin:0">📝 材料作成</div>
+        <div style="font-size:13px;color:var(--gray)">
+          登録NO <strong id="mat-reg-no" style="color:var(--blue);font-size:16px">-</strong>
+          現在の登録数 <strong id="mat-total" style="color:var(--text)">-</strong>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>種目</label>
+        <select id="mat-category"></select>
+      </div>
+      <div class="form-group">
+        <label>メニュー（練習本数×セット数など）</label>
+        <input type="text" id="mat-menu" placeholder="例: 50x8、100x4x3">
+      </div>
+      <div class="form-group">
+        <label>内容</label>
+        <input type="text" id="mat-content" placeholder="例: 1-4Des+(1E+1H)x2">
+      </div>
+      <div class="form-group">
+        <label>サイクル</label>
+        <input type="text" id="mat-cycle" placeholder="例: 1'30、45&quot;">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>全時間</label>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="number" id="mat-time" placeholder="秒" style="width:80px" oninput="updateMatTimeDisp()">
+            <span id="mat-time-disp" style="font-weight:bold;color:var(--blue);font-size:15px;min-width:70px">－</span>
+            <button class="btn" style="background:var(--blue-light);color:var(--blue);white-space:nowrap;font-size:12px" onclick="openTimeCalc()">時間電卓</button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>HR（心拍数）</label>
+          <input type="number" id="mat-hr" placeholder="例: 160">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>練習距離</label>
+          <select id="mat-distance"></select>
+        </div>
+        <div class="form-group">
+          <label>練習パターン</label>
+          <select id="mat-pattern"></select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>メニュー分類</label>
+        <select id="mat-bunrui"></select>
+      </div>
+
+      <!-- ナビゲーションボタン -->
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;border-top:1px solid var(--border);padding-top:14px">
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav('first')" title="先頭へ">|‹</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav(-100)">‹100</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav(-10)">‹‹</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav(-1)">‹</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav(1)">›</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav(10)">››</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav(100)">100›</button>
+        <button class="btn btn-sm" style="background:#eee" onclick="matNav('last')" title="末尾へ">›|</button>
+        <div style="flex:1"></div>
+        <button class="btn btn-sm" style="background:#f0fdf4;color:var(--green);border:1px solid var(--green)" onclick="matNew()">新入力</button>
+        <button class="btn btn-sm" style="background:#fff8e1;color:#b7770d;border:1px solid #f0c040" onclick="matCopy()">写す</button>
+        <button class="btn btn-primary btn-sm" onclick="matSave()">登録</button>
+      </div>
+    </div>
+
+    <!-- 右：練習パターン（強度別距離） -->
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-title">練習パターン（強度別距離）</div>
+        <div id="mat-intensity-fields"></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:2px solid var(--blue-light);margin-top:8px">
+          <span style="font-weight:bold">TOTAL</span>
+          <span id="mat-total-dist" style="font-size:20px;font-weight:bold;color:var(--blue)">0</span>
+        </div>
+      </div>
+      <button class="btn" style="width:100%;background:var(--green);color:white" onclick="exportCSV()">📥 CSV出力</button>
+    </div>
+  </div>
+
+  <!-- 過去データ一覧 -->
+  <div class="card" style="margin-top:16px">
+    <div class="card-title">📋 登録済み材料一覧</div>
+    <div class="search-bar" style="margin-bottom:12px">
+      <input type="text" id="mat-list-search" placeholder="メニュー・内容で検索..." oninput="filterMatList()" style="flex:1;min-width:150px">
+      <select id="mat-list-category" onchange="filterMatList()">
+        <option value="">全種目</option>
+      </select>
+      <select id="mat-list-source" onchange="filterMatList()">
+        <option value="">全件</option>
+        <option value="user">新規登録のみ</option>
+      </select>
+      <select id="mat-list-sort" onchange="filterMatList()">
+        <option value="id_desc">新しい順（NO↓）</option>
+        <option value="id_asc">古い順（NO↑）</option>
+        <option value="dist_desc">距離が多い順</option>
+        <option value="dist_asc">距離が少ない順</option>
+        <option value="time_desc">時間が長い順</option>
+        <option value="time_asc">時間が短い順</option>
+      </select>
+    </div>
+    <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+      <table>
+        <thead><tr>
+          <th>NO</th><th>種目</th><th>メニュー</th><th>内容</th><th>サイクル</th><th>距離</th><th>時間</th><th>強度</th><th>操作</th>
+        </tr></thead>
+        <tbody id="mat-list-tbody"></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="mat-list-pagination"></div>
+  </div>
+</div>
+
+</main>
+
+<!-- 時間電卓モーダル -->
+<div class="modal-overlay" id="modal-time-calc">
+  <div class="modal" style="max-width:580px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title">⏱ 時間電卓</div>
+      <button class="modal-close" onclick="closeModal('modal-time-calc')">×</button>
+    </div>
+    <p style="font-size:13px;color:var(--gray);margin-bottom:10px">必要項目を入力、または選択し、計算ボタンを押してください</p>
+
+    <div style="display:flex;gap:12px;align-items:flex-start">
+      <!-- 左：入力テーブル -->
+      <div style="flex:1;min-width:0">
+        <table style="border-collapse:collapse;font-size:13px;width:100%">
+          <colgroup>
+            <col style="width:14px"><!-- ( -->
+            <col style="width:46px"><!-- 分 -->
+            <col style="width:16px"><!-- - -->
+            <col style="width:46px"><!-- 秒 -->
+            <col style="width:16px"><!-- × -->
+            <col style="width:58px"><!-- 本数 -->
+            <col style="width:28px"><!-- 本)× -->
+            <col style="width:52px"><!-- SET -->
+          </colgroup>
+          <thead>
+            <tr style="background:var(--blue);color:white;text-align:center">
+              <th style="padding:6px 2px"></th>
+              <th style="padding:6px 4px">時間(分)</th>
+              <th style="padding:6px 2px"></th>
+              <th style="padding:6px 4px">(秒)</th>
+              <th style="padding:6px 2px"></th>
+              <th style="padding:6px 4px">本</th>
+              <th style="padding:6px 2px"></th>
+              <th style="padding:6px 4px">SET</th>
+            </tr>
+          </thead>
+          <tbody id="tc-rows"></tbody>
+        </table>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:2px solid var(--blue-light)">
+          <strong>TOTAL</strong>
+          <div id="tc-total" style="font-size:15px;font-weight:bold;color:var(--blue)">－</div>
+          <button class="btn btn-sm" style="background:#eee" onclick="tcClear()">クリア</button>
+        </div>
+      </div>
+
+      <!-- 右：TOTALSET / REST / 結果 -->
+      <div style="width:148px;flex-shrink:0;border-left:1px solid var(--border);padding-left:12px;display:flex;flex-direction:column;gap:10px">
+        <div>
+          <div style="font-weight:bold;font-size:12px;margin-bottom:4px">TOTALSET</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:13px">
+            <span>×</span>
+            <select id="tc-totalset" style="width:54px;padding:4px;border:1px solid var(--border);border-radius:5px"></select>
+            <span>SET</span>
+          </div>
+        </div>
+        <div>
+          <div style="font-weight:bold;font-size:12px;margin-bottom:4px">TOTALSETREST</div>
+          <div style="display:flex;align-items:center;gap:4px;font-size:13px">
+            <input type="number" id="tc-rest" value="0" min="0"
+              style="width:70px;padding:4px;border:1px solid var(--border);border-radius:5px;text-align:right">
+            <span>秒</span>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%" onclick="tcCalc()">計算</button>
+        <div style="background:var(--blue-light);border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:var(--gray)">全時間</div>
+          <div id="tc-result-disp" style="font-size:16px;font-weight:bold;color:var(--blue);line-height:1.3">0分0秒</div>
+          <input type="hidden" id="tc-result" value="0">
+        </div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-sm" style="flex:1;background:#eee" onclick="closeModal('modal-time-calc')">戻る</button>
+          <button class="btn btn-success btn-sm" style="flex:1" onclick="applyTime()">登録</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 新規日誌モーダル -->
+<div class="modal-overlay" id="modal-new-menu">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">📝 新しい練習を記録</div>
+      <button class="modal-close" onclick="closeModal('modal-new-menu')">×</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>日付 *</label>
+        <input type="date" id="new-date">
+      </div>
+      <div class="form-group">
+        <label>総距離 (m)</label>
+        <input type="number" id="new-dist" placeholder="例: 5000">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>総時間 (分)</label>
+        <input type="number" id="new-time" placeholder="例: 90">
+      </div>
+      <div class="form-group">
+        <label>一言メモ</label>
+        <input type="text" id="new-note" placeholder="例: 調子良かった">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>練習内容メモ</label>
+      <textarea id="new-content" rows="4" placeholder="練習の詳細を記入..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn" style="background:#eee" onclick="closeModal('modal-new-menu')">キャンセル</button>
+      <button class="btn btn-success" onclick="saveNewMenu()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 印刷メニュー選択モーダル -->
+<div class="modal-overlay" id="modal-print-select">
+  <div class="modal" style="max-width:520px;width:96%;max-height:88vh;overflow-y:auto">
+    <div class="modal-header">
+      <div class="modal-title">🖨️ 印刷するメニューを選択（最大6件）</div>
+      <button class="modal-close" onclick="closeModal('modal-print-select')">×</button>
+    </div>
+    <div style="padding:12px 16px">
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+        <input type="text" id="print-select-search" placeholder="日付・内容で絞り込み..." oninput="renderPrintSelectList()"
+          style="flex:1;min-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+        <span id="print-select-count" style="font-size:13px;color:var(--blue);font-weight:bold;white-space:nowrap">0 / 6 件選択</span>
+      </div>
+      <div id="print-select-list" style="display:flex;flex-direction:column;gap:4px;max-height:52vh;overflow-y:auto"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
+        <button class="btn" onclick="closeModal('modal-print-select')">キャンセル</button>
+        <button class="btn btn-primary" onclick="executePrintSelected()">🖨️ 印刷プレビューへ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 印刷プレビューモーダル -->
+<div class="modal-overlay" id="modal-print">
+  <div class="modal" style="max-width:860px;width:96%;max-height:92vh;overflow-y:auto">
+    <div class="modal-header no-print" style="flex-wrap:wrap;gap:8px">
+      <div class="modal-title">📄 練習メニュー 印刷プレビュー</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span style="font-size:13px;color:var(--gray)">表示モード：</span>
+        <select id="print-mode" onchange="changePrintMode()" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px">
+          <option value="1">1件詳細</option>
+          <option value="2">2件</option>
+          <option value="3">3件</option>
+          <option value="4">4件</option>
+          <option value="5">5件</option>
+          <option value="6">6件</option>
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ 印刷</button>
+        <button class="modal-close" onclick="closeModal('modal-print')">×</button>
+      </div>
+    </div>
+    <div id="print-content" class="print-preview"></div>
+  </div>
+</div>
+
+<!-- 詳細モーダル -->
+<div class="modal-overlay" id="modal-detail">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="detail-title">練習詳細</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-sm" style="background:var(--blue-light);color:var(--blue)" id="detail-print-btn" onclick="showMenuPrint(currentDetailMenu)">🖨️ 印刷</button>
+        <button class="modal-close" onclick="closeModal('modal-detail')">×</button>
+      </div>
+    </div>
+    <div id="detail-content"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==================== データ管理 ====================
+let allMenus = [], allExercises = [], intensities = [], categories = [], bunrui = [], distances = [], parts = [];
+let journalPage = 1;
+const PAGE_SIZE = 20;
+let filteredMenus = [], filteredExercises = [];
+let builderItems = [];
+let currentDetailMenu = null;
+
+const INTENSITY_NAMES = { 1:'パターン', 2:'AE', 3:'EN1', 4:'EN2', 5:'EN3', 6:'AN1', 7:'AN2', 8:'AN3' };
+const INTENSITY_BADGE = { 2:'badge-ae', 3:'badge-en1', 4:'badge-en2', 5:'badge-en3', 6:'badge-an1', 7:'badge-an2', 8:'badge-an3' };
+
+async function fetchAll() {
+  [allMenus, allExercises, intensities, categories, bunrui, distances, parts] = await Promise.all([
+    fetch('/api/menus').then(r=>r.json()),
+    fetch('/api/exercises').then(r=>r.json()),
+    fetch('/api/intensities').then(r=>r.json()),
+    fetch('/api/categories').then(r=>r.json()),
+    fetch('/api/bunrui').then(r=>r.json()),
+    fetch('/api/distances').then(r=>r.json()),
+    fetch('/api/parts').then(r=>r.json()),
+  ]);
+  filteredMenus = [...allMenus];
+  filteredExercises = [...allExercises];
+  buildMenuByDate();
+  initDashboard();
+  initJournal();
+  initBuilder();
+  initMaterial();
+  renderCalView();
+}
+
+// ==================== ページ切替 ====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ==================== ダッシュボード ====================
+function initDashboard() {
+  const mdbMenus = allMenus.filter(m => m._source === 'mdb');
+  const totalDist = mdbMenus.reduce((s,m) => s + (m['トータル距離']||0), 0);
+  const totalTime = mdbMenus.reduce((s,m) => s + (m['トータル時間']||0), 0);
+  const thisYear = new Date().getFullYear();
+  const yearCount = mdbMenus.filter(m => {
+    const y = m['年'] || (m['日付'] ? new Date(m['日付']).getFullYear() : 0);
+    return y == thisYear;
+  }).length;
+
+  document.getElementById('stat-total').textContent = mdbMenus.length.toLocaleString();
+  document.getElementById('stat-dist').textContent = (totalDist/1000).toFixed(0).toLocaleString();
+  document.getElementById('stat-time').textContent = Math.round(totalTime/60).toLocaleString();
+  document.getElementById('stat-year').textContent = yearCount;
+
+  // 年別チャート
+  fetch('/api/stats').then(r=>r.json()).then(stats => {
+    const container = document.getElementById('chart-yearly');
+    const max = Math.max(...stats.map(s=>s.totalDistance));
+    const bars = stats.map(s => {
+      const pct = max > 0 ? (s.totalDistance/max*100) : 0;
+      return `<div class="bar-wrap">
+        <div class="bar-val">${(s.totalDistance/1000).toFixed(0)}</div>
+        <div class="bar" style="height:${Math.max(pct*1.8,2)}px" title="${s.year}年: ${(s.totalDistance/1000).toFixed(1)}km"></div>
+        <div class="bar-label">${s.year}</div>
+      </div>`;
+    }).join('');
+    container.innerHTML = `<div class="bar-chart">${bars}</div>`;
+  });
+
+  // 最近の練習
+  const recent = allMenus.slice(0, 8);
+  const html = recent.map(m => {
+    const date = m['日付'] || m.date || '';
+    const dist = m['トータル距離'] || m.dist || 0;
+    const note = m['一言'] || m.note || '';
+    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px">
+      <span style="color:var(--blue);font-weight:500">${date}</span>
+      <span>${dist.toLocaleString()}m</span>
+      <span style="color:var(--gray);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('recent-list').innerHTML = html || '<div class="empty">データなし</div>';
+}
+
+// ==================== カレンダー ====================
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth(); // 0-based
+let calSelectedDate = null;
+let menuByDate = {}; // "YYYY-MM-DD" -> [menu, ...]
+let calView = 'month'; // 'month' | 'week' | 'day'
+let calWeekDate = new Date(); // 週ビューの基準日
+let calDayDate  = new Date(); // 日ビューの基準日
+
+function buildMenuByDate() {
+  menuByDate = {};
+  for (const m of allMenus) {
+    const d = (m['日付'] || m.date || '').substring(0, 10);
+    if (!d) continue;
+    if (!menuByDate[d]) menuByDate[d] = [];
+    menuByDate[d].push(m);
+  }
+}
+
+function setJournalView(view) {
+  const isCalendar = view === 'calendar';
+  document.getElementById('journal-calendar-view').style.display = isCalendar ? '' : 'none';
+  document.getElementById('journal-list-view').style.display = isCalendar ? 'none' : '';
+  document.getElementById('btn-cal-view').classList.toggle('active', isCalendar);
+  document.getElementById('btn-list-view').classList.toggle('active', !isCalendar);
+}
+
+function calToday() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  calWeekDate = new Date(now);
+  calDayDate  = new Date(now);
+  calSelectedDate = toLocalDateStr(now);
+  renderCalView();
+}
+
+function calNavMove(delta) {
+  if (calView === 'month') {
+    calMonth += delta;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    if (calMonth < 0)  { calMonth = 11; calYear--; }
+    renderCalendar();
+  } else if (calView === 'week') {
+    calWeekDate = new Date(calWeekDate.getTime() + delta * 7 * 86400000);
+    renderWeekView();
+  } else {
+    calDayDate = new Date(calDayDate.getTime() + delta * 86400000);
+    calSelectedDate = toLocalDateStr(calDayDate);
+    renderDayView();
+  }
+}
+
+function setCalView(v) {
+  calView = v;
+  // 週・日ビューの基準を現在選択中の日または今日に合わせる
+  const base = calSelectedDate ? new Date(calSelectedDate + 'T00:00:00') : new Date();
+  calWeekDate = new Date(base);
+  calDayDate  = new Date(base);
+  if (!calSelectedDate) calSelectedDate = toLocalDateStr(base);
+  ['month','week','day'].forEach(n => {
+    document.getElementById('btn-cal-'+n).classList.toggle('active', n === v);
+  });
+  renderCalView();
+}
+
+function renderCalView() {
+  document.getElementById('cal-view-month').style.display = calView === 'month' ? '' : 'none';
+  document.getElementById('cal-view-week').style.display  = calView === 'week'  ? '' : 'none';
+  document.getElementById('cal-view-day').style.display   = calView === 'day'   ? '' : 'none';
+  if (calView === 'month') renderCalendar();
+  else if (calView === 'week') renderWeekView();
+  else renderDayView();
+}
+
+function renderWeekView() {
+  const DOW = ['月','火','水','木','金','土','日'];
+  const DOW_CLS = ['mon','tue','wed','thu','fri','sat','sun'];
+  // 週の月曜日を求める
+  const d = new Date(calWeekDate);
+  const dow = d.getDay(); // 0=日
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
+  const today = toLocalDateStr(new Date());
+
+  // ヘッダーラベル
+  const endDay = new Date(monday); endDay.setDate(monday.getDate() + 6);
+  const fmt = dt => `${dt.getFullYear()}年${dt.getMonth()+1}月${dt.getDate()}日`;
+  document.getElementById('cal-month-label').textContent = `${fmt(monday)} 〜 ${fmt(endDay)}`;
+
+  let cols = '';
+  for (let i = 0; i < 7; i++) {
+    const day = new Date(monday); day.setDate(monday.getDate() + i);
+    const ds = toLocalDateStr(day);
+    const isToday = ds === today;
+    const isSel   = ds === calSelectedDate;
+    const entries = menuByDate[ds] || [];
+    const dowCls  = DOW_CLS[i];
+
+    // AM/PM に振り分け
+    const amEntries = [], pmEntries = [];
+    for (const m of entries) {
+      const ap = m['曜日'] ? decodeCurday(m['曜日']).split(' ')[1] : (m.ampm || 'AM');
+      (ap === 'PM' ? pmEntries : amEntries).push(m);
+    }
+
+    const makeCard = (m, isPm) => {
+      const dist  = (m['トータル距離'] || m.dist || 0).toLocaleString();
+      const rawNote = m['一言'] || m.note || '';
+      const note = rawNote.startsWith('¥') || rawNote.startsWith('\\') ? '' : rawNote;
+      const part  = (parts.find(p => p.ID == m['種目']) || {})['パート'] || '';
+      const exes  = getMenuExercises(m);
+      const exNames = exes.slice(0,3).map(e => e['練習']||'').filter(Boolean).join(' / ');
+      const mJson = JSON.stringify(m).replace(/"/g,'&quot;');
+      return `<div class="week-menu-card${isPm?' pm-card':''}" onclick="event.stopPropagation();showWeekDayDetail(${mJson})">
+        <div class="wm-dist">${dist}m</div>
+        ${part ? `<div class="wm-name">${part}</div>` : ''}
+        ${note ? `<div class="wm-name">「${note}」</div>` : ''}
+        ${exNames ? `<div class="wm-ex">${exNames}</div>` : ''}
+      </div>`;
+    };
+
+    const amHtml = amEntries.map(m => makeCard(m, false)).join('') || `<div class="week-empty">−</div>`;
+    const pmHtml = pmEntries.map(m => makeCard(m, true)).join('')  || `<div class="week-empty">−</div>`;
+
+    cols += `<div class="week-col" style="${isSel?'border-color:var(--blue);border-width:2px':''}">
+      <div class="week-col-header ${dowCls}${isToday?' today':''}" onclick="goToDayView('${ds}')">
+        <div>${DOW[i]}</div>
+        <div style="font-size:15px;font-weight:bold">${day.getDate()}</div>
+      </div>
+      <div class="week-ampm-row">
+        <div class="week-slot am">
+          <div class="week-slot-label">AM</div>
+          ${amHtml}
+          <div class="week-add-btn">
+            <button class="btn btn-sm" style="font-size:10px;padding:1px 5px;background:var(--blue-light);color:var(--blue)" title="AMメニュー作成"
+              onclick="event.stopPropagation();calSelectedDate='${ds}';document.getElementById('builder-ampm').value='AM';openBuilderForDate('${ds}')">＋</button>
+          </div>
+        </div>
+        <div class="week-slot pm">
+          <div class="week-slot-label">PM</div>
+          ${pmHtml}
+          <div class="week-add-btn">
+            <button class="btn btn-sm" style="font-size:10px;padding:1px 5px;background:#fff0e0;color:#e67e22" title="PMメニュー作成"
+              onclick="event.stopPropagation();calSelectedDate='${ds}';document.getElementById('builder-ampm').value='PM';openBuilderForDate('${ds}')">＋</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }
+  document.getElementById('cal-week-grid').innerHTML = `<div class="week-grid">${cols}</div>`;
+}
+
+function goToDayView(ds) {
+  calDayDate = new Date(ds + 'T00:00:00');
+  calSelectedDate = ds;
+  calView = 'day';
+  ['month','week','day'].forEach(n =>
+    document.getElementById('btn-cal-'+n).classList.toggle('active', n === 'day')
+  );
+  document.getElementById('cal-view-month').style.display = 'none';
+  document.getElementById('cal-view-week').style.display  = 'none';
+  document.getElementById('cal-view-day').style.display   = '';
+  renderDayView();
+}
+
+function showWeekDayDetail(menu) {
+  const date = menu['日付'] || menu.date || '';
+  goToDayView(date);
+}
+
+function renderDayView() {
+  const ds = calSelectedDate || toLocalDateStr(new Date());
+  document.getElementById('cal-month-label').textContent = formatDateJp(ds);
+  const entries = menuByDate[ds] || [];
+  const container = document.getElementById('cal-day-content');
+  if (!entries.length) {
+    container.innerHTML = `<div class="day-no-data">
+      <div style="font-size:40px;margin-bottom:12px">📭</div>
+      <div>この日の練習メニューはありません</div>
+      <button class="btn btn-primary" style="margin-top:16px" onclick="openBuilderForDate('${ds}')">✏️ メニューを作成</button>
+    </div>`;
+    return;
+  }
+  container.innerHTML = entries.map(m => buildMenuDetailHtml(m)).join('');
+}
+
+function renderCalendar() {
+  const DAYS = ['月','火','水','木','金','土','日'];
+  const DOW_CLASS = ['mon','tue','wed','thu','fri','sat','sun'];
+
+  document.getElementById('cal-month-label').textContent = `${calYear}年 ${calMonth + 1}月`;
+
+  const grid = document.getElementById('cal-grid');
+
+  // 曜日ヘッダー（月曜始まり）
+  let html = DAYS.map((d, i) => `<div class="cal-dow ${DOW_CLASS[i]}">${d}</div>`).join('');
+
+  // 月初の曜日（月曜=0 に調整）
+  const firstDay = new Date(calYear, calMonth, 1).getDay(); // 0=日
+  const startOffset = (firstDay === 0) ? 6 : firstDay - 1; // 月曜始まり補正
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+  const today = toLocalDateStr(new Date());
+
+  // 前月の余白
+  for (let i = startOffset - 1; i >= 0; i--) {
+    const d = prevDays - i;
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+
+  // 当月の日付
+  for (let d = 1; d <= daysInMonth; d++) {
+    const mm = String(calMonth + 1).padStart(2, '0');
+    const dd = String(d).padStart(2, '0');
+    const dateStr = `${calYear}-${mm}-${dd}`;
+    const dow = new Date(calYear, calMonth, d).getDay(); // 0=日
+    const dowClass = dow === 6 ? 'sat' : dow === 0 ? 'sun' : '';
+    const isToday = dateStr === today;
+    const isSelected = dateStr === calSelectedDate;
+    const entries = menuByDate[dateStr] || [];
+    const hasData = entries.length > 0;
+
+    const totalDist = entries.reduce((s, m) => s + (m['トータル距離'] || 0), 0);
+    const dots = entries.slice(0, 4).map(() => `<div class="cal-dot"></div>`).join('');
+    const distLabel = hasData ? `<div class="cal-day-dist">${(totalDist/1000).toFixed(1)}km</div>` : '';
+
+    const classes = ['cal-day', dowClass, isToday ? 'today' : '', isSelected ? 'selected' : '', hasData ? 'has-data' : ''].filter(Boolean).join(' ');
+    html += `<div class="${classes}" onclick="calSelectDate('${dateStr}')">
+      <div class="cal-day-num">${d}</div>
+      <div class="cal-day-dot">${dots}</div>
+      ${distLabel}
+    </div>`;
+  }
+
+  // 次月の余白（6週分=42マスになるよう）
+  const total = startOffset + daysInMonth;
+  const remaining = total % 7 === 0 ? 0 : 7 - (total % 7);
+  for (let d = 1; d <= remaining; d++) {
+    html += `<div class="cal-day other-month"><div class="cal-day-num">${d}</div></div>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function buildMenuDetailHtml(menu) {
+  const date     = menu['日付'] || menu.date || '';
+  const week     = menu['週'] || '';
+  const dowStr   = menu['曜日'] ? decodeCurday(menu['曜日']) : (menu.ampm || '');
+  const partName = (parts.find(p => p.ID == menu['種目']) || {})['パート'] || '';
+  const note     = menu['一言'] || menu.note || '';
+
+  const exercises = getMenuExercises(menu);
+  const intDisplay = getIntDisplay(menu, exercises);
+  const totalDist = menu['トータル距離'] || menu.dist || exercises.reduce((s,e)=>s+(e['トータル']||0),0);
+  const totalMin  = menu['トータル時間'] || menu.time || Math.round(exercises.reduce((s,e)=>s+(e['全時間']||0),0)/60);
+
+  const dateLabel = formatDateJp(date);
+  const subParts  = [week ? week+' Wk' : '', dowStr, partName].filter(Boolean);
+
+  // 7列テーブル（種目 / 練習・内容 / サイクル / 距離 / 強度・HR / 時間 / 累計）
+  let cumSec = 0;
+  let rows = '';
+  if (exercises.length) {
+    rows = exercises.map(e => {
+      const catName  = (categories.find(c => c.ID == e['練習内容']) || {})['種目'] || '';
+      const menuName = e['練習'] || '';
+      const content  = e['内容'] || '';
+      const dist     = e['トータル'] || 0;
+      const patId    = e['練習パターン'];
+      const patName  = INTENSITY_NAMES[patId] || '';
+      const badgeCls = INTENSITY_BADGE[patId]  || '';
+      const hr       = e['心拍数'] || '';
+      const cycle    = e['サイクル'] || '';
+      const exSec    = e['全時間'] || 0;
+      const exMin    = exSec ? Math.round(exSec / 60) : null;
+      cumSec += exSec;
+      const cumMin = Math.round(cumSec / 60);
+      return `<tr>
+        <td class="ps-cat">${catName}</td>
+        <td class="ps-main">
+          <div class="ps-name">${menuName}</div>
+          ${content ? `<div class="ps-content">${content}</div>` : ''}
+        </td>
+        <td class="ps-num">${cycle || '-'}</td>
+        <td class="ps-num">${dist ? dist.toLocaleString()+'m' : '-'}</td>
+        <td class="ps-int">${patName ? `<span class="ps-badge ${badgeCls}">${patName}</span>` : '-'}${hr ? `<span class="ps-hr"> / ${hr}</span>` : ''}</td>
+        <td class="ps-num">${exMin !== null ? exMin+'分' : '-'}</td>
+        <td class="ps-num ps-cum">${cumMin}分</td>
+      </tr>`;
+    }).join('');
+  } else {
+    const contentText = menu['メニュー一言'] || menu.content || '';
+    if (contentText) {
+      const lines = contentText.split('\n').map(l => l.trim()).filter(Boolean);
+      rows = lines.map((line, i) => {
+        const distMatch = line.match(/^(\d+)[xX×]/);
+        const repMatch  = line.match(/[xX×](\d+)/g);
+        let distGuess = '';
+        if (distMatch && repMatch) {
+          const d = parseInt(distMatch[1]);
+          const nums = repMatch.map(s => parseInt(s.replace(/[xX×]/,'')));
+          const reps = nums.reduce((a,b)=>a*b, 1);
+          distGuess = (d * reps).toLocaleString() + 'm';
+        }
+        return `<tr>
+          <td class="ps-cat"></td>
+          <td class="ps-main"><div class="ps-name">${line}</div></td>
+          <td class="ps-num">-</td>
+          <td class="ps-num">${distGuess || '-'}</td>
+          <td class="ps-int">-</td>
+          <td class="ps-num">-</td>
+          <td class="ps-num ps-cum">-</td>
+        </tr>`;
+      }).join('');
+    } else {
+      rows = `<tr><td colspan="7" style="padding:10px 6px;font-size:12px;color:#666">（材料データが登録されていません）</td></tr>`;
+    }
+  }
+
+  const hasInt = intDisplay.some(v => v > 0);
+  const intHtml = hasInt ? `
+    <div class="md-int-wrap">
+      <table class="md-int-table">
+        <tr>${INT_NAMES_PRINT.map(n=>`<th>${n}</th>`).join('')}</tr>
+        <tr>${intDisplay.map(v=>`<td>${v>0?v.toLocaleString():'-'}</td>`).join('')}</tr>
+      </table>
+    </div>` : '';
+
+  const mJson = JSON.stringify(menu).replace(/"/g,'&quot;');
+
+  return `
+    <div class="md-menu-block">
+      <div class="md-header">
+        <div>
+          <div style="font-size:16px;font-weight:700;color:var(--text)">${dateLabel || date}</div>
+          ${subParts.length ? `<div style="font-size:12px;color:var(--gray);margin-top:2px">${subParts.join('　')}</div>` : ''}
+          ${note ? `<div style="font-size:12px;color:#555;margin-top:2px">「${note}」</div>` : ''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm" style="background:var(--blue-light);color:var(--blue)" onclick="showMenuPrint(${mJson})">🖨️ 印刷</button>
+          <button class="btn btn-sm" style="background:#fff8e1;color:#b8860b" onclick="copyMenuToBuilder(${mJson})">📋 コピーして編集</button>
+          <button class="btn btn-sm" style="background:#f0fdf4;color:var(--green)" onclick="openBuilderForDate('${date}')">✏️ 新規作成</button>
+          ${menu._source === 'user' && menu._id ? `<button class="btn btn-sm" style="background:#fdf0f0;color:var(--red)" onclick="deleteMenuFromCal(${menu._id})">🗑️ 削除</button>` : ''}
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="ps-table">
+          <thead><tr>
+            <th class="ps-cat">種目</th>
+            <th class="ps-main">練習・内容</th>
+            <th class="ps-num">サイクル</th>
+            <th class="ps-num">距離</th>
+            <th class="ps-int">強度 / HR</th>
+            <th class="ps-num">時間</th>
+            <th class="ps-num ps-cum">累計</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+      ${intHtml}
+      <div class="md-footer">
+        <div class="md-footer-item"><div class="md-footer-val">${totalDist.toLocaleString()}</div><div class="md-footer-label">合計距離 (m)</div></div>
+        <div class="md-footer-item"><div class="md-footer-val">${totalMin}</div><div class="md-footer-label">所要時間 (分)</div></div>
+        ${exercises.length ? `<div class="md-footer-item"><div class="md-footer-val">${exercises.length}</div><div class="md-footer-label">種目数</div></div>` : ''}
+      </div>
+    </div>`;
+}
+
+function calSelectDate(dateStr) {
+  calSelectedDate = (calSelectedDate === dateStr) ? null : dateStr;
+  renderCalendar(); // 月ビューのみ再描画（選択ハイライト更新）
+
+  const detail = document.getElementById('cal-detail');
+
+  if (!calSelectedDate) {
+    detail.classList.remove('open');
+    return;
+  }
+
+  const entries = menuByDate[dateStr] || [];
+  const [y, m, d] = dateStr.split('-');
+  const label = entries.length
+    ? `${y}年${parseInt(m)}月${parseInt(d)}日 の練習 (${entries.length}件)`
+    : `${y}年${parseInt(m)}月${parseInt(d)}日`;
+  document.getElementById('cal-detail-title').textContent = label;
+
+  const body = entries.length
+    ? entries.map(menu => buildMenuDetailHtml(menu)).join('')
+    : `<div class="empty" style="padding:16px 0">この日の練習記録はありません</div>`;
+
+  document.getElementById('cal-detail-body').innerHTML = body;
+  detail.classList.add('open');
+}
+
+// ==================== 練習日誌 ====================
+function initJournal() {
+  // 年セレクト
+  const years = [...new Set(allMenus.map(m => m['年'] || (m['日付'] ? new Date(m['日付']).getFullYear() : null)).filter(Boolean))].sort((a,b)=>b-a);
+  const sel = document.getElementById('journal-year');
+  years.forEach(y => sel.insertAdjacentHTML('beforeend', `<option value="${y}">${y}年</option>`));
+  renderJournal();
+}
+
+function filterJournal() {
+  journalPage = 1;
+  const q = document.getElementById('journal-search').value.toLowerCase();
+  const yr = document.getElementById('journal-year').value;
+  const mo = document.getElementById('journal-month').value;
+  filteredMenus = allMenus.filter(m => {
+    const date = m['日付'] || m.date || '';
+    const note = (m['一言'] || m.note || '').toLowerCase();
+    const content = (m['メニュー一言'] || m.content || '').toLowerCase();
+    const y = m['年'] || (date ? new Date(date).getFullYear() : 0);
+    const mo2 = date ? new Date(date).getMonth()+1 : 0;
+    if (yr && y != yr) return false;
+    if (mo && mo2 != mo) return false;
+    if (q && !note.includes(q) && !content.includes(q) && !date.includes(q)) return false;
+    return true;
+  });
+  renderJournal();
+}
+
+function renderJournal() {
+  const start = (journalPage-1)*PAGE_SIZE;
+  const page = filteredMenus.slice(start, start+PAGE_SIZE);
+  const tbody = document.getElementById('journal-tbody');
+  if (!page.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty">データが見つかりません</td></tr>'; renderPagination('journal', filteredMenus.length); return; }
+
+  tbody.innerHTML = page.map(m => {
+    const date = m['日付'] || m.date || '';
+    const dist = m['トータル距離'] || m.dist || 0;
+    const time = m['トータル時間'] || m.time || 0;
+    const note = m['一言'] || m.note || '';
+    const isUser = m._source === 'user';
+
+    // 強度バー（MDBデータのみ）
+    const intensityBar = buildIntensityBar(m);
+    const srcBadge = isUser ? '<span class="badge badge-user">新規</span>' : '';
+    const delBtn = isUser ? `<button class="btn btn-danger btn-sm" onclick="deleteMenu(${m._id})">削除</button>` : '';
+    const mJson = JSON.stringify(m).replace(/"/g,'&quot;');
+
+    return `<tr onclick="showDetail(${mJson})" style="cursor:pointer">
+      <td><strong>${date}</strong> ${srcBadge}</td>
+      <td><strong>${dist.toLocaleString()}</strong>m</td>
+      <td>${time}分</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</td>
+      <td>${intensityBar}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">
+        <button class="btn btn-sm" style="background:var(--blue-light);color:var(--blue)" onclick="showMenuPrint(${mJson})">🖨️</button>
+        <button class="btn btn-sm" style="background:#fff8e1;color:#b8860b" onclick="copyMenuToBuilder(${mJson})" title="コピーして編集">📋</button>
+        ${delBtn}
+      </td>
+    </tr>`;
+  }).join('');
+  renderPagination('journal', filteredMenus.length);
+}
+
+function buildIntensityBar(m) {
+  const fields = ['運動1','運動2','運動3','運動4','運動5','運動6','運動7'];
+  const vals = fields.map(f => m[f] || 0);
+  const total = vals.reduce((s,v)=>s+v,0);
+  if (!total) return '<span style="color:var(--gray);font-size:12px">-</span>';
+  const colors = ['#27ae60','#2980b9','#3498db','#2471a3','#e67e22','#e74c3c','#c0392b'];
+  return `<div style="display:flex;height:14px;border-radius:4px;overflow:hidden;width:120px">` +
+    vals.map((v,i) => v>0 ? `<div style="width:${v/total*100}%;background:${colors[i]}" title="${INTENSITY_NAMES[i+2]||'?'}: ${v}m"></div>` : '').join('') +
+    `</div>`;
+}
+
+function showDetail(m) {
+  currentDetailMenu = m;
+  const date = m['日付'] || m.date || '';
+  const dist = m['トータル距離'] || m.dist || 0;
+  const time = m['トータル時間'] || m.time || 0;
+  const note = m['一言'] || m.note || '';
+  const content = m['メニュー一言'] || m.content || m['練習内容'] || '';
+
+  const fields = ['運動1','運動2','運動3','運動4','運動5','運動6','運動7'];
+  const intensityRows = fields.map((f,i) => {
+    const v = m[f] || 0;
+    if (!v) return '';
+    const name = INTENSITY_NAMES[i+2] || f;
+    return `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)">
+      <span><span class="badge ${INTENSITY_BADGE[i+2]||''}">${name}</span></span>
+      <span>${v.toLocaleString()}m</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('detail-title').textContent = date + ' の練習';
+  document.getElementById('detail-content').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+      <div style="padding:12px;background:var(--blue-light);border-radius:8px;text-align:center">
+        <div style="font-size:24px;font-weight:bold;color:var(--blue)">${dist.toLocaleString()}</div>
+        <div style="font-size:12px;color:var(--gray)">総距離 (m)</div>
+      </div>
+      <div style="padding:12px;background:#e8f8f5;border-radius:8px;text-align:center">
+        <div style="font-size:24px;font-weight:bold;color:var(--green)">${time}</div>
+        <div style="font-size:12px;color:var(--gray)">総時間 (分)</div>
+      </div>
+    </div>
+    ${note ? `<div style="padding:12px;background:#fef9e7;border-radius:8px;margin-bottom:16px">${note}</div>` : ''}
+    ${content ? `<div style="padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:16px;font-size:13px">${content}</div>` : ''}
+    ${intensityRows ? `<div class="card-title">強度別距離</div>${intensityRows}` : ''}
+  `;
+  document.getElementById('modal-detail').classList.add('open');
+}
+
+// ==================== 印刷共通ヘルパー ====================
+const DOW_NAMES_PRINT = ['月','火','水','木','金','土','日'];
+const INT_KEYS_PRINT  = ['運動1','運動2','運動3','運動4','運動5','運動6','運動7'];
+const INT_NAMES_PRINT = ['AE','EN1','EN2','EN3','AN1','AN2','AN3'];
+
+function decodeCurday(v) {
+  if (!v) return '';
+  const idx = Math.floor((v - 1) / 2);
+  const ap  = (v - 1) % 2 === 0 ? 'AM' : 'PM';
+  return (DOW_NAMES_PRINT[idx] || '') + ' ' + ap;
+}
+
+function getMenuExercises(menu) {
+  if (menu.exercises_data && menu.exercises_data.length) return menu.exercises_data;
+  if (menu['メニュー']) {
+    const ids = String(menu['メニュー']).split(',').map(s => s.trim()).filter(Boolean);
+    return ids.map(id => allExercises.find(e => String(e.ID||e.id) === id)).filter(Boolean);
+  }
+  return [];
+}
+
+function getIntDisplay(menu, exercises) {
+  const totals = INT_KEYS_PRINT.map(k => exercises.reduce((s,e) => s+(e[k]||0), 0));
+  if (totals.some(v => v > 0)) return totals;
+  return INT_KEYS_PRINT.map(k => menu[k] || 0);
+}
+
+// ---- 日付を日本語表記に変換 ----
+// ローカル日付を "YYYY-MM-DD" 文字列で返す（toISOString()のUTCズレ回避）
+function toLocalDateStr(d) {
+  const p = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+}
+
+function formatDateJp(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr + 'T00:00:00');
+  if (isNaN(d)) return dateStr;
+  const DOW = ['日','月','火','水','木','金','土'];
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${DOW[d.getDay()]}）`;
+}
+
+// ---- 1件詳細HTML生成 ----
+function buildSingleMenuHtml(menu) {
+  const date     = menu['日付'] || menu.date || '';
+  const year     = menu['年'] || (date ? new Date(date).getFullYear() : '');
+  const week     = menu['週'] || '';
+  const dowStr   = menu['曜日'] ? decodeCurday(menu['曜日']) : (menu.ampm || '');
+  const partName = (parts.find(p => p.ID == menu['種目']) || {})['パート'] || '';
+  const note     = menu['一言'] || menu.note || '';
+
+  const exercises = getMenuExercises(menu);
+  const intDisplay = getIntDisplay(menu, exercises);
+  const totalDist = menu['トータル距離'] || menu.dist || exercises.reduce((s,e)=>s+(e['トータル']||0),0);
+  const totalMin  = menu['トータル時間'] || menu.time || Math.round(exercises.reduce((s,e)=>s+(e['全時間']||0),0)/60);
+
+  const dateLabel = formatDateJp(date);
+  const subParts  = [week ? week+' Wk' : '', dowStr, partName].filter(Boolean);
+
+  // 練習行（種目 / 練習・内容 / サイクル / 距離 / 強度・HR / 時間 / 累計）
+  let cumSec = 0;
+  let rows = '';
+  if (exercises.length) {
+    rows = exercises.map(e => {
+      const catName  = (categories.find(c => c.ID == e['練習内容']) || {})['種目'] || '';
+      const menuName = e['練習'] || '';
+      const content  = e['内容'] || '';
+      const dist     = e['トータル'] || 0;
+      const patId    = e['練習パターン'];
+      const patName  = INTENSITY_NAMES[patId] || '';
+      const badgeCls = INTENSITY_BADGE[patId]  || '';
+      const hr       = e['心拍数'] || '';
+      const cycle    = e['サイクル'] || '';
+      const exSec    = e['全時間'] || 0;
+      const exMin    = exSec ? Math.round(exSec / 60) : null;
+      cumSec += exSec;
+      const cumMin = Math.round(cumSec / 60);
+
+      return `<tr>
+        <td class="ps-cat">${catName}</td>
+        <td class="ps-main">
+          <div class="ps-name">${menuName}</div>
+          ${content ? `<div class="ps-content">${content}</div>` : ''}
+        </td>
+        <td class="ps-num">${cycle || '-'}</td>
+        <td class="ps-num">${dist ? dist.toLocaleString()+'m' : '-'}</td>
+        <td class="ps-int">${patName ? `<span class="ps-badge ${badgeCls}">${patName}</span>` : '-'}${hr ? `<span class="ps-hr"> / ${hr}</span>` : ''}</td>
+        <td class="ps-num">${exMin !== null ? exMin+'分' : '-'}</td>
+        <td class="ps-num ps-cum">${cumMin}分</td>
+      </tr>`;
+    }).join('');
+  } else {
+    const txt = menu['メニュー一言'] || menu.content || '';
+    rows = `<tr><td colspan="7" style="white-space:pre-wrap;padding:8px 4px;font-size:12px">${txt}</td></tr>`;
+  }
+
+  const hasInt = intDisplay.some(v => v > 0);
+  const intHtml = hasInt ? `
+    <div class="pm-int-wrap">
+      <table class="pm-int-table">
+        <tr>${INT_NAMES_PRINT.map(n=>`<th>${n}</th>`).join('')}</tr>
+        <tr>${intDisplay.map(v=>`<td>${v>0?v.toLocaleString():'-'}</td>`).join('')}</tr>
+      </table>
+    </div>` : '';
+
+  return `
+    <div class="pm-header">
+      <div class="ps-date">${dateLabel || date}</div>
+      ${subParts.length ? `<div class="ps-sub">${subParts.join('　')}</div>` : ''}
+      ${note ? `<div class="pm-note">${note}</div>` : ''}
+    </div>
+    <table class="ps-table">
+      <thead><tr>
+        <th class="ps-cat">種目</th>
+        <th class="ps-main">練習・内容</th>
+        <th class="ps-num">サイクル</th>
+        <th class="ps-num">距離</th>
+        <th class="ps-int">強度 / HR</th>
+        <th class="ps-num">時間</th>
+        <th class="ps-num ps-cum">累計</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    ${intHtml}
+    <div class="pm-footer">
+      <div>TOTAL　　<strong>${totalDist.toLocaleString()} M</strong></div>
+      <div>所要時間　約　<strong>${totalMin} 分</strong>　かかります</div>
+    </div>`;
+}
+
+// ---- 1件コンパクトHTML生成（6件グリッド用）----
+function buildCompactMenuHtml(menu) {
+  const year     = menu['年'] || (menu['日付'] ? new Date(menu['日付']).getFullYear() : '');
+  const week     = menu['週'] || '';
+  const dowStr   = menu['曜日'] ? decodeCurday(menu['曜日']) : (menu.ampm || '');
+  const partName = (parts.find(p => p.ID == menu['種目']) || {})['パート'] || '';
+  const date     = menu['日付'] || menu.date || '';
+  const note     = menu['一言'] || menu.note || '';
+
+  // 日付を "YYYY年M月D日（曜）" 形式で表示
+  let dateLabel = '';
+  if (date) {
+    const d = new Date(date + 'T00:00:00');
+    const DOW = ['日','月','火','水','木','金','土'];
+    dateLabel = `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${DOW[d.getDay()]}）`;
+  }
+  const headerParts = [dateLabel || date, dowStr, partName].filter(Boolean);
+  const header = headerParts.join('　');
+
+  const exercises = getMenuExercises(menu);
+  const intDisplay = getIntDisplay(menu, exercises);
+  const totalDist = menu['トータル距離'] || menu.dist || exercises.reduce((s,e)=>s+(e['トータル']||0),0);
+  const totalMin  = menu['トータル時間'] || menu.time || Math.round(exercises.reduce((s,e)=>s+(e['全時間']||0),0)/60);
+
+  let cumSec = 0, cumDist = 0;
+  let rows = '';
+  if (exercises.length) {
+    rows = exercises.map(e => {
+      const catName = (categories.find(c => c.ID == e['練習内容']) || {})['種目'] || '';
+      const menuName = e['練習'] || '';
+      const cycle   = e['サイクル'] || '';
+      const content = e['内容'] || '';
+      const patName = INTENSITY_NAMES[e['練習パターン']] || '';
+      const hr      = e['心拍数'] || '';
+      cumSec  += e['全時間'] || 0;
+      cumDist += e['トータル'] || 0;
+      const cumMin = Math.round(cumSec / 60);
+      const rightL1 = patName ? patName + (hr ? '/' + hr : '') : '';
+      const rightL2 = cumDist ? cumDist.toLocaleString()+'m '+cumMin+'分' : '';
+      return `<tr>
+        <td class="c-cat">${catName}</td>
+        <td><strong>${menuName}</strong>${cycle ? ' <span style="color:#555;font-size:10px">'+cycle+'</span>' : ''}
+          ${content ? `<div class="c-sub">${content}</div>` : ''}</td>
+        <td class="c-right">${rightL1 ? rightL1+'<br>' : ''}${rightL2}</td>
+      </tr>`;
+    }).join('');
+  } else {
+    const txt = menu['メニュー一言'] || menu.content || '';
+    rows = `<tr><td colspan="3" style="font-size:10px;white-space:pre-wrap">${txt.substring(0,120)}</td></tr>`;
+  }
+
+  const hasInt = intDisplay.some(v => v > 0);
+  const intHtml = hasInt ? `
+    <table class="pm-cell-int" style="margin-top:5px">
+      <tr>${INT_NAMES_PRINT.map(n=>`<th>${n}</th>`).join('')}</tr>
+      <tr>${intDisplay.map(v=>`<td>${v>0?v.toLocaleString():'0'}</td>`).join('')}</tr>
+    </table>` : '';
+
+  return `
+    <div class="pm-cell">
+      <div class="pm-cell-header">${header}${note ? `　<span style="font-weight:normal;font-size:10px;color:#555">${note}</span>` : ''}</div>
+      <table width="100%"><tbody>${rows}</tbody></table>
+      ${intHtml}
+      <div class="pm-cell-footer">TOTAL <strong>${totalDist.toLocaleString()}M</strong>　約 <strong>${totalMin}分</strong></div>
+    </div>`;
+}
+
+// ---- 印刷モーダルを開く ----
+let _printTargetMenu  = null;  // 単件モード用
+let _printTargetMenus = [];    // 6件モード用（直近N件）
+
+function showMenuPrint(menu) {
+  _printTargetMenu = menu;
+  _printTargetMenus = [menu];
+  document.getElementById('print-mode').value = '1';
+  renderPrintContent(1);
+  document.getElementById('modal-print').classList.add('open');
+}
+
+function showMultiMenuPrint(menus) {
+  _printTargetMenus = menus;
+  if (_printTargetMenus.length === 1) _printTargetMenu = menus[0];
+  const count = menus.length;
+  document.getElementById('print-mode').value = String(Math.min(count, 6));
+  renderPrintContent(count);
+  document.getElementById('modal-print').classList.add('open');
+}
+
+function renderPrintContent(count) {
+  const n = Math.max(1, Math.min(6, parseInt(count) || 1));
+  const base = _printTargetMenus.length
+    ? _printTargetMenus
+    : [...allMenus].sort((a,b)=>new Date(b['日付']||b.date||0)-new Date(a['日付']||a.date||0));
+  const menus = base.slice(0, n);
+  if (!menus.length) {
+    document.getElementById('print-content').innerHTML = '<p style="padding:20px;color:#888">メニューが見つかりません</p>';
+    return;
+  }
+  if (n === 1) {
+    document.getElementById('print-content').innerHTML = buildSingleMenuHtml(menus[0]);
+  } else {
+    const cells = menus.map(m => buildCompactMenuHtml(m)).join('');
+    document.getElementById('print-content').innerHTML = `<div class="pm-grid-${n}">${cells}</div>`;
+  }
+}
+
+function changePrintMode() {
+  const n = parseInt(document.getElementById('print-mode').value) || 1;
+  if (_printTargetMenus.length === 0) {
+    _printTargetMenus = [...allMenus].sort((a,b)=>new Date(b['日付']||b.date||0)-new Date(a['日付']||a.date||0)).slice(0, n);
+  }
+  renderPrintContent(n);
+}
+
+function printRecentMenus(n) {
+  const count = n || 6;
+  const sorted = [...allMenus].sort((a,b) =>
+    new Date(b['日付']||b.date||0) - new Date(a['日付']||a.date||0)
+  ).slice(0, count);
+  showMultiMenuPrint(sorted);
+}
+
+let _printSelectIds = new Set();
+
+function openPrintSelectModal() {
+  _printSelectIds = new Set();
+  document.getElementById('print-select-search').value = '';
+  renderPrintSelectList();
+  document.getElementById('modal-print-select').classList.add('open');
+}
+
+function renderPrintSelectList() {
+  const keyword = (document.getElementById('print-select-search').value || '').toLowerCase();
+  const sorted = [...allMenus].sort((a,b) =>
+    new Date(b['日付']||b.date||0) - new Date(a['日付']||a.date||0)
+  );
+  const filtered = keyword
+    ? sorted.filter(m => {
+        const d = (m['日付']||m.date||'').toLowerCase();
+        const n = (m['一言']||m.note||m.content||'').toLowerCase();
+        return d.includes(keyword) || n.includes(keyword);
+      })
+    : sorted;
+
+  const list = document.getElementById('print-select-list');
+  list.innerHTML = filtered.map(m => {
+    const id  = m._id || m.ID || m['ID'] || (m['日付']||m.date);
+    const key = String(id);
+    const checked = _printSelectIds.has(key);
+    const date = m['日付'] || m.date || '';
+    const dateLabel = formatDateJp(date);
+    const dowStr = m['曜日'] ? decodeCurday(m['曜日']) : (m.ampm || '');
+    const partName = (parts.find(p => p.ID == m['種目']) || {})['パート'] || '';
+    const note = m['一言'] || m.note || '';
+    const dist = (m['トータル距離'] || m.dist || 0).toLocaleString();
+    const disabled = (!checked && _printSelectIds.size >= 6) ? 'disabled' : '';
+    return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid ${checked ? 'var(--blue)' : 'var(--border)'};border-radius:8px;cursor:pointer;background:${checked ? 'var(--blue-light)' : 'white'};opacity:${disabled?'0.45':'1'}">
+      <input type="checkbox" ${checked?'checked':''} ${disabled} onchange="togglePrintSelect('${key}', this)"
+        style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px">${dateLabel || date}${dowStr ? '　'+dowStr : ''}</div>
+        <div style="font-size:11px;color:var(--gray)">${partName}${note ? '　「'+note+'」' : ''}　${dist}m</div>
+      </div>
+    </label>`;
+  }).join('');
+
+  document.getElementById('print-select-count').textContent = `${_printSelectIds.size} / 6 件選択`;
+}
+
+function togglePrintSelect(key, checkbox) {
+  if (checkbox.checked) {
+    if (_printSelectIds.size < 6) _printSelectIds.add(key);
+    else checkbox.checked = false;
+  } else {
+    _printSelectIds.delete(key);
+  }
+  renderPrintSelectList();
+}
+
+function executePrintSelected() {
+  if (_printSelectIds.size === 0) { alert('メニューを1件以上選択してください'); return; }
+  const selected = [...allMenus].filter(m => {
+    const id = String(m._id || m.ID || m['ID'] || (m['日付']||m.date));
+    return _printSelectIds.has(id);
+  }).sort((a,b) => new Date(a['日付']||a.date||0) - new Date(b['日付']||b.date||0));
+  closeModal('modal-print-select');
+  showMultiMenuPrint(selected);
+}
+
+function renderPagination(prefix, total) {
+  const pages = Math.ceil(total/PAGE_SIZE);
+  const current = journalPage;
+  const el = document.getElementById(prefix + '-pagination');
+  if (pages <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  if (current > 1) html += `<button onclick="changePage('${prefix}',${current-1})">‹</button>`;
+  for (let i = Math.max(1,current-2); i <= Math.min(pages,current+2); i++) {
+    html += `<button class="${i===current?'active':''}" onclick="changePage('${prefix}',${i})">${i}</button>`;
+  }
+  if (current < pages) html += `<button onclick="changePage('${prefix}',${current+1})">›</button>`;
+  el.innerHTML = html;
+}
+
+function changePage(prefix, page) {
+  journalPage = page; renderJournal();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==================== メニュービルダー ====================
+function initBuilder() {
+  // 種目（W-up〜Down）
+  const catSel = document.getElementById('builder-category');
+  categories.filter(c => c.ID >= 2 && c.ID <= 10).sort((a,b) => a.ID-b.ID)
+    .forEach(c => catSel.insertAdjacentHTML('beforeend',
+      `<option value="${c.ID}">${(c['種目']||'').trim()}</option>`));
+
+  // 練習距離
+  const distSel = document.getElementById('builder-distance');
+  distances.filter(d => d.ID > 1).forEach(d => distSel.insertAdjacentHTML('beforeend',
+    `<option value="${d.ID}">${(d['距離']||'').trim()}</option>`));
+
+  // 練習パターン（強度 AE〜AN3）
+  const intenSel = document.getElementById('builder-intensity');
+  intensities.filter(i => i.ID >= 2).forEach(i => intenSel.insertAdjacentHTML('beforeend',
+    `<option value="${i.ID}">${(i['強度名']||'').trim()}</option>`));
+
+  // メニュー分類
+  const bunSel = document.getElementById('builder-bunrui');
+  bunrui.filter(b => b.ID > 1).forEach(b => bunSel.insertAdjacentHTML('beforeend',
+    `<option value="${b.ID}">${(b['分類名']||'').trim()}</option>`));
+
+  // 今日の日付を初期値にセット
+  document.getElementById('builder-date').value = toLocalDateStr(new Date());
+
+  filterBuilder();
+}
+
+function filterBuilder() {
+  const q     = document.getElementById('builder-search').value.toLowerCase();
+  const cat   = document.getElementById('builder-category').value;
+  const dist  = document.getElementById('builder-distance').value;
+  const inten = document.getElementById('builder-intensity').value;
+  const bun   = document.getElementById('builder-bunrui').value;
+  const limit = document.getElementById('builder-limit').value;
+
+  let filtered = allExercises.filter(e => {
+    if (cat   && String(e['練習内容']) !== cat)   return false;
+    if (dist  && String(e['練習距離']) !== dist)  return false;
+    if (inten && String(e['練習内容']) !== inten) return false;
+    if (bun   && String(e['分類'])     !== bun)   return false;
+    if (q) {
+      const name    = (e['練習']||'').toLowerCase();
+      const content = (e['内容']||'').toLowerCase();
+      if (!name.includes(q) && !content.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // ソート
+  const sortKey = document.getElementById('builder-sort').value;
+  filtered = [...filtered].sort((a, b) => {
+    const aid = a.ID||a.id||0, bid = b.ID||b.id||0;
+    if (sortKey === 'id_asc')    return aid - bid;
+    if (sortKey === 'id_desc')   return bid - aid;
+    if (sortKey === 'dist_desc') return (b['トータル']||0) - (a['トータル']||0);
+    if (sortKey === 'dist_asc')  return (a['トータル']||0) - (b['トータル']||0);
+    if (sortKey === 'time_desc') return (b['全時間']||0) - (a['全時間']||0);
+    if (sortKey === 'time_asc')  return (a['全時間']||0) - (b['全時間']||0);
+    return bid - aid;
+  });
+
+  // 件数制限
+  const total = filtered.length;
+  if (limit !== '0') filtered = filtered.slice(0, parseInt(limit)||50);
+
+  document.getElementById('builder-count').textContent =
+    `${total.toLocaleString()}件中 ${filtered.length}件表示`;
+
+  const tbody = document.getElementById('builder-library-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">該当なし</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(e => {
+    const eid   = e.ID || e.id;
+    const badge = INTENSITY_BADGE[e['練習内容']] || '';
+    const iname = INTENSITY_NAMES[e['練習内容']] || '';
+    const timeDisp = e['全時間'] ? secToMinSec(e['全時間']) : '';
+    return `<tr>
+      <td style="color:var(--gray);font-size:12px">${eid}</td>
+      <td><strong>${e['練習']||''}</strong>${timeDisp ? `<div style="font-size:11px;color:var(--gray)">${timeDisp}</div>` : ''}</td>
+      <td class="mat-content-cell" style="font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in"
+          title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['内容']||''}</td>
+      <td class="mat-content-cell" style="font-size:12px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['サイクル']||''}</td>
+      <td style="white-space:nowrap">${(e['トータル']||0).toLocaleString()}m</td>
+      <td><span class="badge ${badge}" style="font-size:11px">${iname}</span></td>
+      <td><button class="btn btn-primary btn-sm" onclick="addToBuilder(${eid})">＋</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function addToBuilder(id) {
+  const ex = allExercises.find(e => (e.ID||e.id) == id);
+  if (!ex) return;
+  builderItems.push(ex);
+  renderBuilder();
+  showToast('追加しました: ' + ex['練習']);
+}
+
+function removeFromBuilder(idx) {
+  builderItems.splice(idx, 1);
+  renderBuilder();
+}
+
+function renderBuilder() {
+  const tbody = document.getElementById('builder-menu-tbody');
+  if (!builderItems.length) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty">右のライブラリから練習を追加してください</td></tr>';
+    document.getElementById('builder-total-dist').textContent = '0 m';
+    document.getElementById('builder-total-time').textContent = '0 分';
+    document.getElementById('builder-total-count').textContent = '0';
+    return;
+  }
+  const totalDist = builderItems.reduce((s,e) => s+(e['トータル']||0), 0);
+  const intervalSec = (builderItems.length > 1 ? builderItems.length - 1 : 0) * 60;
+  const totalTime = builderItems.reduce((s,e) => s+(e['全時間']||0), 0) + intervalSec;
+  tbody.innerHTML = builderItems.map((e,i) => {
+    const badge = INTENSITY_BADGE[e['練習内容']] || '';
+    const iname = INTENSITY_NAMES[e['練習内容']] || '';
+    const timeDisp = e['全時間'] ? secToMinSec(e['全時間']) : '-';
+    const catName = (categories.find(c => c.ID == e['練習内容']) || {})['種目'] || '';
+    return `<tr draggable="true" data-idx="${i}"
+        ondragstart="builderDragStart(event,${i})"
+        ondragover="builderDragOver(event)"
+        ondrop="builderDrop(event,${i})"
+        ondragend="builderDragEnd()"
+        style="cursor:grab">
+      <td style="padding:2px 6px;color:#aaa;font-size:16px;cursor:grab;user-select:none" title="ドラッグして移動">⠿</td>
+      <td style="font-size:12px;white-space:nowrap;color:var(--blue);font-weight:600">${catName}</td>
+      <td><strong>${e['練習']||''}</strong></td>
+      <td class="mat-content-cell" style="font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="toggleMatContent(this)">${e['内容']||''}</td>
+      <td class="mat-content-cell" style="font-size:12px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);cursor:zoom-in" title="クリックで展開" onclick="toggleMatContent(this)">${e['サイクル']||''}</td>
+      <td style="white-space:nowrap">${(e['トータル']||0).toLocaleString()}m</td>
+      <td style="white-space:nowrap">${timeDisp}</td>
+      <td><span class="badge ${badge}" style="font-size:11px">${iname}</span></td>
+      <td><button class="btn btn-danger btn-sm" onclick="removeFromBuilder(${i})">✕</button></td>
+    </tr>`;
+  }).join('');
+  document.getElementById('builder-total-dist').textContent = totalDist.toLocaleString() + ' m';
+  document.getElementById('builder-total-time').textContent = Math.round(totalTime/60) + ' 分';
+  document.getElementById('builder-total-count').textContent = builderItems.length;
+}
+
+let _dragSrcIdx = null;
+
+function builderDragStart(event, i) {
+  _dragSrcIdx = i;
+  event.dataTransfer.effectAllowed = 'move';
+  event.currentTarget.style.opacity = '0.4';
+}
+
+function builderDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  // ドロップ先を強調
+  document.querySelectorAll('#builder-menu-tbody tr').forEach(r => r.style.borderTop = '');
+  event.currentTarget.style.borderTop = '2px solid var(--blue)';
+}
+
+function builderDrop(event, toIdx) {
+  event.preventDefault();
+  if (_dragSrcIdx === null || _dragSrcIdx === toIdx) return;
+  const item = builderItems.splice(_dragSrcIdx, 1)[0];
+  builderItems.splice(toIdx, 0, item);
+  renderBuilder();
+}
+
+function builderDragEnd() {
+  _dragSrcIdx = null;
+  document.querySelectorAll('#builder-menu-tbody tr').forEach(r => {
+    r.style.opacity = '';
+    r.style.borderTop = '';
+  });
+}
+
+function clearBuilder() {
+  builderItems = [];
+  renderBuilder();
+}
+
+function openBuilderForDate(dateStr) {
+  const d = dateStr || calSelectedDate || toLocalDateStr(new Date());
+  document.getElementById('builder-date').value = d;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-builder').classList.add('active');
+  document.querySelector('nav button[onclick="showPage(\'builder\')"]').classList.add('active');
+}
+
+function copyMenuToBuilder(menu) {
+  const exercises = getMenuExercises(menu);
+  if (!exercises.length) {
+    showToast('この練習メニューには材料データがないためコピーできません', true);
+    return;
+  }
+  if (builderItems.length > 0) {
+    if (!confirm('現在作成中のメニューをクリアして、このメニューをコピーしますか？')) return;
+  }
+  builderItems = exercises.map(e => ({...e}));
+  // 日付は今日にリセット、一言・AMPMはそのままコピー
+  const today = toLocalDateStr(new Date());
+  document.getElementById('builder-date').value = today;
+  document.getElementById('builder-ampm').value = menu.ampm || 'AM';
+  document.getElementById('builder-note').value = menu['一言'] || menu.note || '';
+  renderBuilder();
+  // メニュー作成タブへ移動
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-builder').classList.add('active');
+  document.querySelector('nav button[onclick="showPage(\'builder\')"]').classList.add('active');
+  showToast(`${exercises.length}件の練習をコピーしました`);
+}
+
+async function saveBuilderAsMenu() {
+  if (!builderItems.length) { showToast('練習を追加してください', true); return; }
+  const dateVal = document.getElementById('builder-date').value;
+  const date = dateVal || toLocalDateStr(new Date());
+  const ampm = document.getElementById('builder-ampm').value;
+  const note = document.getElementById('builder-note').value;
+  const totalDist = builderItems.reduce((s,e) => s+(e['トータル']||0), 0);
+  const intervalMin = builderItems.length > 1 ? builderItems.length - 1 : 0;
+  const totalTime = builderItems.reduce((s,e) => s+Math.round((e['全時間']||0)/60), 0) + intervalMin;
+  const content = builderItems.map(e => `${e['練習']} ${e['内容']||''}`).join('\n');
+
+  const res = await fetch('/api/menus', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      date, '日付': date,
+      ampm,
+      dist: totalDist, time: totalTime,
+      '一言': note, note,
+      content,
+      'トータル距離': totalDist,
+      'トータル時間': totalTime,
+      exercises_data: builderItems,
+    })
+  });
+  if (res.ok) {
+    showToast('日誌に保存しました！');
+    builderItems = [];
+    document.getElementById('builder-note').value = '';
+    renderBuilder();
+    allMenus = await fetch('/api/menus').then(r=>r.json());
+    filteredMenus = [...allMenus];
+    buildMenuByDate();
+    renderCalView();
+    filterJournal();
+  }
+}
+
+// ==================== 新規日誌 ====================
+function openNewMenuModal() {
+  document.getElementById('new-date').value = toLocalDateStr(new Date());
+  document.getElementById('modal-new-menu').classList.add('open');
+}
+
+async function saveNewMenu() {
+  const date = document.getElementById('new-date').value;
+  if (!date) { showToast('日付を入力してください', true); return; }
+  const data = {
+    date, '日付': date,
+    dist: parseInt(document.getElementById('new-dist').value)||0,
+    time: parseInt(document.getElementById('new-time').value)||0,
+    note: document.getElementById('new-note').value,
+    content: document.getElementById('new-content').value,
+    'トータル距離': parseInt(document.getElementById('new-dist').value)||0,
+    'トータル時間': parseInt(document.getElementById('new-time').value)||0,
+    '一言': document.getElementById('new-note').value,
+  };
+  const res = await fetch('/api/menus', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(data) });
+  if (res.ok) {
+    showToast('保存しました！');
+    closeModal('modal-new-menu');
+    allMenus = await fetch('/api/menus').then(r=>r.json());
+    filteredMenus = [...allMenus];
+    buildMenuByDate();
+    renderCalView();
+    filterJournal();
+  }
+}
+
+async function deleteMenu(id) {
+  if (!confirm('この記録を削除しますか？')) return;
+  await fetch('/api/menus/' + id, { method: 'DELETE' });
+  showToast('削除しました');
+  allMenus = await fetch('/api/menus').then(r=>r.json());
+  filteredMenus = [...allMenus];
+  buildMenuByDate();
+  renderCalView();
+  filterJournal();
+}
+
+async function deleteMenuFromCal(id) {
+  const menu = allMenus.find(m => m._id == id);
+  const dateLabel = menu ? formatDateJp(menu['日付'] || menu.date || '') : '';
+  if (!confirm(`${dateLabel ? dateLabel + ' の' : ''}この練習メニューを削除しますか？\n※削除すると元に戻せません。`)) return;
+  await fetch('/api/menus/' + id, { method: 'DELETE' });
+  showToast('削除しました');
+  allMenus = await fetch('/api/menus').then(r=>r.json());
+  filteredMenus = [...allMenus];
+  buildMenuByDate();
+  renderCalView();
+  filterJournal();
+}
+
+// ==================== ユーティリティ ====================
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); }));
+
+function showToast(msg, isError=false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (isError ? ' error' : '');
+  setTimeout(() => t.className = 'toast', 2500);
+}
+
+// ==================== 材料作成 ====================
+let matIndex = 0;       // 現在表示中のインデックス
+let matListFiltered = [];
+let matListPage = 1;
+const MAT_INTENSITY_IDS = [2,3,4,5,6,7,8]; // AE,EN1,EN2,EN3,AN1,AN2,AN3
+
+function initMaterial() {
+  // 種目セレクト（W-up〜Down のみ、ID=2〜10）
+  const catSel = document.getElementById('mat-category');
+  const validCats = [...categories]
+    .filter(c => c.ID >= 2 && c.ID <= 10)
+    .sort((a,b) => (a.ID||0)-(b.ID||0));
+  catSel.innerHTML = validCats.map(c =>
+    `<option value="${c.ID}">${(c['種目']||c['名前']||'').trim()}</option>`
+  ).join('');
+
+  // 距離セレクト
+  document.getElementById('mat-distance').innerHTML =
+    distances.filter(d => d.ID > 1).map(d =>
+      `<option value="${d.ID}">${(d['距離']||'').trim()}</option>`
+    ).join('');
+
+  // 練習パターンセレクト（AE〜AN3）
+  document.getElementById('mat-pattern').innerHTML =
+    intensities.filter(i => i.ID >= 2).map(i =>
+      `<option value="${i.ID}">${(i['強度名']||'').trim()}</option>`
+    ).join('');
+
+  // メニュー分類セレクト
+  document.getElementById('mat-bunrui').innerHTML =
+    bunrui.filter(b => b.ID > 1).map(b =>
+      `<option value="${b.ID}">${(b['分類名']||'').trim()}</option>`
+    ).join('');
+
+  // 強度別距離フィールド
+  const intFields = document.getElementById('mat-intensity-fields');
+  intFields.innerHTML = MAT_INTENSITY_IDS.map(id => {
+    const name = INTENSITY_NAMES[id] || id;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+      <label style="font-weight:bold;width:60px">${name}</label>
+      <input type="number" id="mat-int-${id}" value="0" min="0" style="width:110px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;text-align:right"
+        oninput="updateMatTotal()">
+    </div>`;
+  }).join('');
+
+  // 種目フィルターを W-up〜Down（ID 2〜10）で生成
+  const catFilter = document.getElementById('mat-list-category');
+  catFilter.innerHTML = '<option value="">全種目</option>' +
+    categories.filter(c => c.ID >= 2 && c.ID <= 10)
+      .sort((a,b) => a.ID - b.ID)
+      .map(c => `<option value="${c.ID}">${(c['種目']||'').trim()}</option>`)
+      .join('');
+
+  // デフォルトは新しい順
+  document.getElementById('mat-list-sort').value = 'id_desc';
+
+  matListFiltered = [...allExercises];
+  matIndex = allExercises.length > 0 ? allExercises.length - 1 : 0;
+  updateMatTotal();
+  matLoad(matIndex);
+  filterMatList();
+  document.getElementById('mat-total').textContent = allExercises.length;
+}
+
+function updateMatTotal() {
+  const total = MAT_INTENSITY_IDS.reduce((s,id) => s + (parseInt(document.getElementById('mat-int-'+id)?.value)||0), 0);
+  document.getElementById('mat-total-dist').textContent = total.toLocaleString() + ' m';
+}
+
+function matLoad(idx) {
+  if (allExercises.length === 0) return;
+  idx = Math.max(0, Math.min(idx, allExercises.length - 1));
+  matIndex = idx;
+  const e = allExercises[idx];
+  document.getElementById('mat-reg-no').textContent = e.ID || e.id || '-';
+  document.getElementById('mat-total').textContent = allExercises.length;
+  document.getElementById('mat-menu').value = e['練習'] || '';
+  document.getElementById('mat-content').value = e['内容'] || '';
+  document.getElementById('mat-cycle').value = e['サイクル'] || '';
+  document.getElementById('mat-time').value = e['全時間'] || '';
+  updateMatTimeDisp();
+  document.getElementById('mat-hr').value = e['心拍数'] || '';
+
+  // セレクト
+  setSelectVal('mat-category', e['練習内容'] ?? e['種目']);
+  setSelectVal('mat-bunrui', e['分類']);
+
+  // 強度別距離（運動1〜運動10 → AE=運動1, EN1=運動2, ...）
+  // T_材料では 運動1〜10 が強度別距離に対応
+  const intMap = { 2: e['運動1']||0, 3: e['運動2']||0, 4: e['運動3']||0,
+                   5: e['運動4']||0, 6: e['運動5']||0, 7: e['運動6']||0, 8: e['運動7']||0 };
+  MAT_INTENSITY_IDS.forEach(id => {
+    const el = document.getElementById('mat-int-'+id);
+    if (el) el.value = intMap[id] || 0;
+  });
+  updateMatTotal();
+
+  // 一覧の選択行をハイライト
+  renderMatList();
+}
+
+function setSelectVal(id, val) {
+  const el = document.getElementById(id);
+  if (!el || val == null) return;
+  for (const opt of el.options) { if (opt.value == val) { opt.selected = true; return; } }
+}
+
+function matNav(delta) {
+  if (delta === 'first') matLoad(0);
+  else if (delta === 'last') matLoad(allExercises.length - 1);
+  else matLoad(matIndex + delta);
+}
+
+function matNew() {
+  matIndex = -1;
+  document.getElementById('mat-reg-no').textContent = '新規';
+  document.getElementById('mat-menu').value = '';
+  document.getElementById('mat-content').value = '';
+  document.getElementById('mat-cycle').value = '';
+  document.getElementById('mat-time').value = '';
+  document.getElementById('mat-hr').value = '';
+  MAT_INTENSITY_IDS.forEach(id => { const el = document.getElementById('mat-int-'+id); if(el) el.value=0; });
+  updateMatTotal();
+  document.getElementById('mat-menu').focus();
+}
+
+function matCopy() {
+  if (matIndex < 0 || matIndex >= allExercises.length) return;
+  matIndex = -1;
+  document.getElementById('mat-reg-no').textContent = '新規（コピー）';
+}
+
+async function matSave() {
+  const intVals = {};
+  MAT_INTENSITY_IDS.forEach((id,i) => {
+    intVals[`運動${i+1}`] = parseInt(document.getElementById('mat-int-'+id)?.value)||0;
+  });
+  const total = Object.values(intVals).reduce((s,v)=>s+v,0);
+
+  const data = {
+    '練習': document.getElementById('mat-menu').value.trim(),
+    '内容': document.getElementById('mat-content').value.trim(),
+    'サイクル': document.getElementById('mat-cycle').value.trim(),
+    '全時間': parseInt(document.getElementById('mat-time').value)||0,
+    '心拍数': parseInt(document.getElementById('mat-hr').value)||0,
+    '練習内容': parseInt(document.getElementById('mat-category').value)||1,
+    '分類': parseInt(document.getElementById('mat-bunrui').value)||1,
+    'トータル': total,
+    ...intVals
+  };
+
+  if (!data['練習']) { showToast('メニューを入力してください', true); return; }
+
+  const isUser = matIndex >= 0 && allExercises[matIndex]?._source === 'user';
+  let res;
+  if (matIndex >= 0 && isUser) {
+    const id = allExercises[matIndex].ID || allExercises[matIndex].id;
+    res = await fetch(`/api/exercises/${id}`, { method:'PUT', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  } else {
+    res = await fetch('/api/exercises', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(data) });
+  }
+
+  if (res.ok) {
+    showToast('登録しました！');
+    allExercises = await fetch('/api/exercises').then(r=>r.json());
+    filteredExercises = [...allExercises];
+    matListFiltered = [...allExercises];
+    matIndex = allExercises.length - 1;
+    document.getElementById('mat-total').textContent = allExercises.length;
+    document.getElementById('mat-reg-no').textContent = allExercises[matIndex]?.ID || '-';
+    renderMatList();
+  }
+}
+
+function filterMatList() {
+  const q   = document.getElementById('mat-list-search').value.toLowerCase();
+  const src = document.getElementById('mat-list-source').value;
+  const cat = document.getElementById('mat-list-category').value;
+  const sortKey = document.getElementById('mat-list-sort').value;
+
+  matListFiltered = allExercises.filter(e => {
+    if (src === 'user' && e._source !== 'user') return false;
+    if (cat && String(e['練習内容']) !== cat) return false;
+    if (q) {
+      const name    = (e['練習']||'').toLowerCase();
+      const content = (e['内容']||'').toLowerCase();
+      if (!name.includes(q) && !content.includes(q)) return false;
+    }
+    return true;
+  });
+
+  // ソート
+  matListFiltered.sort((a, b) => {
+    const aid = a.ID || a.id || 0;
+    const bid = b.ID || b.id || 0;
+    if (sortKey === 'id_asc')    return aid - bid;
+    if (sortKey === 'id_desc')   return bid - aid;
+    if (sortKey === 'dist_desc') return (b['トータル']||0) - (a['トータル']||0);
+    if (sortKey === 'dist_asc')  return (a['トータル']||0) - (b['トータル']||0);
+    if (sortKey === 'time_desc') return (b['全時間']||0) - (a['全時間']||0);
+    if (sortKey === 'time_asc')  return (a['全時間']||0) - (b['全時間']||0);
+    return bid - aid;
+  });
+
+  matListPage = 1;
+  renderMatList();
+}
+
+// 種目名を返すヘルパー
+function getCatName(id) {
+  const c = categories.find(c => c.ID == id);
+  return c ? (c['種目']||'').trim() : '-';
+}
+
+function renderMatList() {
+  const start = (matListPage-1)*PAGE_SIZE;
+  const page  = matListFiltered.slice(start, start+PAGE_SIZE);
+  const tbody = document.getElementById('mat-list-tbody');
+  if (!page.length) { tbody.innerHTML='<tr><td colspan="9" class="empty">データなし</td></tr>'; return; }
+
+  const currentId = matIndex >= 0 ? (allExercises[matIndex]?.ID || allExercises[matIndex]?.id) : null;
+
+  tbody.innerHTML = page.map(e => {
+    const eid    = e.ID || e.id;
+    const iname  = INTENSITY_NAMES[e['練習内容']] || '-';
+    const badge  = INTENSITY_BADGE[e['練習内容']] || '';
+    const catName = getCatName(e['練習内容']);
+    const isActive = eid == currentId;
+    const isUser   = e._source === 'user';
+    const timeSec  = e['全時間'] || 0;
+    const timeDisp = timeSec ? secToMinSec(timeSec) : '-';
+    return `<tr style="${isActive ? 'background:var(--blue-light);font-weight:bold' : ''};cursor:pointer" onclick="matJumpTo(${eid})">
+      <td>${eid}${isUser ? ' <span class="badge badge-user" style="font-size:10px">新</span>' : ''}</td>
+      <td style="white-space:nowrap">${catName}</td>
+      <td><strong>${e['練習']||''}</strong></td>
+      <td class="mat-content-cell" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['内容']||''}</td>
+      <td>${e['サイクル']||''}</td>
+      <td>${(e['トータル']||0).toLocaleString()}m</td>
+      <td style="white-space:nowrap">${timeDisp}</td>
+      <td><span class="badge ${badge}">${iname}</span></td>
+      <td onclick="event.stopPropagation()">
+        ${isUser ? `<button class="btn btn-danger btn-sm" onclick="matDelete(${eid})">削除</button>` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+
+  // ページネーション
+  const pages = Math.ceil(matListFiltered.length / PAGE_SIZE);
+  const el = document.getElementById('mat-list-pagination');
+  if (pages <= 1) { el.innerHTML=''; return; }
+  let ph = '';
+  if (matListPage > 1) ph += `<button onclick="changeMatPage(${matListPage-1})">‹</button>`;
+  for (let p = Math.max(1,matListPage-2); p <= Math.min(pages,matListPage+2); p++)
+    ph += `<button class="${p===matListPage?'active':''}" onclick="changeMatPage(${p})">${p}</button>`;
+  if (matListPage < pages) ph += `<button onclick="changeMatPage(${matListPage+1})">›</button>`;
+  el.innerHTML = ph;
+}
+
+function changeMatPage(p) { matListPage = p; renderMatList(); }
+
+function toggleMatContent(cell) {
+  cell.classList.toggle('expanded');
+  cell.title = cell.classList.contains('expanded') ? 'クリックで閉じる' : 'クリックで展開';
+}
+
+function matJumpTo(id) {
+  const idx = allExercises.findIndex(e => (e.ID||e.id) == id);
+  if (idx >= 0) matLoad(idx);
+}
+
+async function matDelete(id) {
+  if (!confirm('この材料を削除しますか？')) return;
+  await fetch(`/api/exercises/${id}`, { method:'DELETE' });
+  showToast('削除しました');
+  allExercises = await fetch('/api/exercises').then(r=>r.json());
+  filteredExercises = [...allExercises];
+  matListFiltered = [...allExercises];
+  matIndex = Math.min(matIndex, allExercises.length-1);
+  matLoad(matIndex);
+}
+
+function exportCSV() {
+  const rows = [['NO','メニュー','内容','サイクル','距離(m)','全時間(秒)','AE','EN1','EN2','EN3','AN1','AN2','AN3']];
+  for (const e of allExercises) {
+    rows.push([e.ID||e.id, e['練習']||'', e['内容']||'', e['サイクル']||'',
+      e['トータル']||0, e['全時間']||0,
+      e['運動1']||0, e['運動2']||0, e['運動3']||0, e['運動4']||0,
+      e['運動5']||0, e['運動6']||0, e['運動7']||0]);
+  }
+  const bom = '﻿';
+  const csv = bom + rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'STPS_材料一覧.csv';
+  a.click();
+  showToast('CSVを出力しました');
+}
+
+// 時間電卓
+function openTimeCalc() {
+  // 4行を生成
+  const rows = document.getElementById('tc-rows');
+  rows.innerHTML = '';
+  const repOpts = Array.from({length:100},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+  const setOpts = Array.from({length:10},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+  const inp = 'width:100%;padding:4px;border:1px solid var(--border);border-radius:5px;text-align:right;box-sizing:border-box';
+  const sel = 'width:100%;padding:4px;border:1px solid var(--border);border-radius:5px;box-sizing:border-box';
+  for (let i = 0; i < 4; i++) {
+    rows.insertAdjacentHTML('beforeend', `
+      <tr style="font-size:13px">
+        <td style="text-align:center;padding:4px 0">(</td>
+        <td style="padding:3px 4px"><input type="number" id="tc-min-${i}" min="0" placeholder="0" style="${inp}"></td>
+        <td style="text-align:center;padding:4px 0">－</td>
+        <td style="padding:3px 4px"><input type="number" id="tc-sec-${i}" min="0" max="59" placeholder="0" style="${inp}"></td>
+        <td style="text-align:center;padding:4px 0">×</td>
+        <td style="padding:3px 4px"><select id="tc-rep-${i}" style="${sel}">${repOpts}</select></td>
+        <td style="text-align:center;padding:4px 0;white-space:nowrap">本)×</td>
+        <td style="padding:3px 4px"><select id="tc-set-${i}" style="${sel}">${setOpts}</select></td>
+      </tr>`);
+  }
+  // TOTALSETセレクト
+  const tsOpts = Array.from({length:10},(_,i)=>`<option value="${i+1}">${i+1}</option>`).join('');
+  document.getElementById('tc-totalset').innerHTML = tsOpts;
+  document.getElementById('tc-rest').value = 0;
+  document.getElementById('tc-total').value = '';
+  document.getElementById('tc-result').textContent = '0';
+  document.getElementById('modal-time-calc').classList.add('open');
+}
+
+function secToMinSec(s) {
+  return `${Math.floor(s/60)}分${s%60}秒`;
+}
+
+function tcCalc() {
+  let rowTotal = 0;
+  for (let i = 0; i < 4; i++) {
+    const min = parseInt(document.getElementById(`tc-min-${i}`).value) || 0;
+    const sec = parseInt(document.getElementById(`tc-sec-${i}`).value) || 0;
+    const rep = parseInt(document.getElementById(`tc-rep-${i}`).value) || 1;
+    const set = parseInt(document.getElementById(`tc-set-${i}`).value) || 1;
+    rowTotal += (min * 60 + sec) * rep * set;
+  }
+  const totalSet = parseInt(document.getElementById('tc-totalset').value) || 1;
+  const rest    = parseInt(document.getElementById('tc-rest').value) || 0;
+  const result  = rowTotal * totalSet + rest;
+  document.getElementById('tc-total').textContent = secToMinSec(rowTotal);
+  document.getElementById('tc-result').value = result;
+  document.getElementById('tc-result-disp').textContent = secToMinSec(result);
+}
+
+function tcClear() {
+  for (let i = 0; i < 4; i++) {
+    document.getElementById(`tc-min-${i}`).value = '';
+    document.getElementById(`tc-sec-${i}`).value = '';
+    document.getElementById(`tc-rep-${i}`).value = 1;
+    document.getElementById(`tc-set-${i}`).value = 1;
+  }
+  document.getElementById('tc-totalset').value = 1;
+  document.getElementById('tc-rest').value = 0;
+  document.getElementById('tc-total').textContent = '－';
+  document.getElementById('tc-result').value = 0;
+  document.getElementById('tc-result-disp').textContent = '0分0秒';
+}
+
+function applyTime() {
+  const val = document.getElementById('tc-result').value;
+  document.getElementById('mat-time').value = val;
+  updateMatTimeDisp();
+  closeModal('modal-time-calc');
+}
+
+function updateMatTimeDisp() {
+  const sec = parseInt(document.getElementById('mat-time').value) || 0;
+  document.getElementById('mat-time-disp').textContent = sec > 0 ? secToMinSec(sec) : '－';
+}
+
+// 起動
+fetchAll();
+</script>
+</body>
+</html>
