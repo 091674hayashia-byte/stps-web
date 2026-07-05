@@ -1526,8 +1526,14 @@ function calSelectDate(dateStr) {
     : `${y}年${parseInt(m)}月${parseInt(d)}日`;
   document.getElementById('cal-detail-title').textContent = label;
 
-  const body = entries.length
-    ? entries.map(menu => buildMenuDetailHtml(menu)).join('')
+  const getAmPm = menu => menu['曜日'] ? decodeCurday(menu['曜日']).split(' ')[1] : (menu.ampm || 'AM');
+  const sortedEntries = [...entries].sort((a, b) => {
+    const apA = getAmPm(a) === 'PM' ? 1 : 0;
+    const apB = getAmPm(b) === 'PM' ? 1 : 0;
+    return apA - apB;
+  });
+  const body = sortedEntries.length
+    ? sortedEntries.map(menu => buildMenuDetailHtml(menu)).join('')
     : `<div class="empty" style="padding:16px 0">この日の練習記録はありません</div>`;
 
   document.getElementById('cal-detail-body').innerHTML = body;
