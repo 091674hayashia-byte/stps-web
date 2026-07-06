@@ -624,7 +624,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div class="card-title" style="margin:0">✏️ メニュー作成</div>
         <div style="display:flex;gap:6px">
-          <button class="btn btn-primary btn-sm" onclick="saveBuilderAsMenu()">📥 日誌に保存</button>
+          <button class="btn btn-primary btn-sm" id="builder-save-btn" onclick="saveBuilderAsMenu()">📥 日誌に保存</button>
           <button class="btn btn-sm" style="background:#eee" onclick="clearBuilder()">クリア</button>
         </div>
       </div>
@@ -1038,6 +1038,7 @@ const PAGE_SIZE = 20;
 let filteredMenus = [], filteredExercises = [];
 let builderItems = [];
 let currentDetailMenu = null;
+let builderEditingId = null; // 編集中のuser menu ID（nullなら新規作成）
 
 const INTENSITY_NAMES = { 1:'パターン', 2:'AE', 3:'EN1', 4:'EN2', 5:'EN3', 6:'AN1', 7:'AN2', 8:'AN3' };
 const INTENSITY_BADGE = { 2:'badge-ae', 3:'badge-en1', 4:'badge-en2', 5:'badge-en3', 6:'badge-an1', 7:'badge-an2', 8:'badge-an3' };
@@ -1411,7 +1412,7 @@ function buildMenuDetailHtml(menu) {
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-sm" style="background:var(--blue-light);color:var(--blue)" onclick="showMenuPrint(${mJson})">🖨️ 印刷</button>
-          <button class="btn btn-sm" style="background:#fff8e1;color:#b8860b" onclick="copyMenuToBuilder(${mJson})">📋 コピーして編集</button>
+          ${menu._source === 'user' && menu._id ? `<button class="btn btn-sm" style="background:#e8f4fd;color:var(--blue)" onclick="editMenuInBuilder(${mJson})">✏️ 編集</button>` : `<button class="btn btn-sm" style="background:#fff8e1;color:#b8860b" onclick="copyMenuToBuilder(${mJson})">📋 コピーして編集</button>`}
           <button class="btn btn-sm" style="background:#f0fdf4;color:var(--green)" onclick="openBuilderForDate('${date}')">✏️ 新規作成</button>
           ${menu._source === 'user' && menu._id ? `<button class="btn btn-sm" style="background:#fdf0f0;color:var(--red)" onclick="deleteMenuFromCal(${menu._id})">🗑️ 削除</button>` : ''}
         </div>
@@ -2100,6 +2101,9 @@ function builderDragEnd() {
 
 function clearBuilder() {
   builderItems = [];
+  builderEditingId = null;
+  const saveBtn = document.getElementById('builder-save-btn');
+  if (saveBtn) saveBtn.textContent = '📥 日誌に保存';
   renderBuilder();
 }
 
@@ -2110,6 +2114,28 @@ function openBuilderForDate(dateStr) {
   document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
   document.getElementById('page-builder').classList.add('active');
   document.querySelector('nav button[onclick="showPage(\'builder\')"]').classList.add('active');
+}
+
+function editMenuInBuilder(menu) {
+  const exercises = getMenuExercises(menu);
+  if (builderItems.length > 0) {
+    if (!confirm('現在作成中のメニューをクリアして、このメニューを編集しますか？')) return;
+  }
+  builderItems = exercises.map(e => ({...e}));
+  const date = menu['日付'] || menu.date || toLocalDateStr(new Date());
+  document.getElementById('builder-date').value = date;
+  document.getElementById('builder-ampm').value = menu.ampm || 'AM';
+  document.getElementById('builder-note').value = menu['一言'] || menu.note || '';
+  // user menuなら編集IDをセット、mdbなら新規扱い
+  builderEditingId = (menu._source === 'user' && menu._id) ? menu._id : null;
+  const saveBtn = document.getElementById('builder-save-btn');
+  if (saveBtn) saveBtn.textContent = builderEditingId ? '💾 上書き更新' : '📥 日誌に保存';
+  renderBuilder();
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-builder').classList.add('active');
+  document.querySelector('nav button[onclick="showPage(\'builder\')"]').classList.add('active');
+  showToast(builderEditingId ? 'メニューを編集モードで開きました' : `${exercises.length}件の練習をコピーしました`);
 }
 
 function copyMenuToBuilder(menu) {
@@ -2147,24 +2173,29 @@ async function saveBuilderAsMenu() {
   const totalTime = builderItems.reduce((s,e) => s+Math.round((e['全時間']||0)/60), 0) + intervalMin;
   const content = builderItems.map(e => `${e['練習']} ${e['内容']||''}`).join('\n');
 
-  const res = await fetch('/api/menus', {
-    method: 'POST',
+  const payload = {
+    date, '日付': date,
+    ampm,
+    dist: totalDist, time: totalTime,
+    '一言': note, note,
+    content,
+    'トータル距離': totalDist,
+    'トータル時間': totalTime,
+    exercises_data: builderItems,
+  };
+  const isUpdate = !!builderEditingId;
+  const res = await fetch(isUpdate ? `/api/menus/${builderEditingId}` : '/api/menus', {
+    method: isUpdate ? 'PUT' : 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      date, '日付': date,
-      ampm,
-      dist: totalDist, time: totalTime,
-      '一言': note, note,
-      content,
-      'トータル距離': totalDist,
-      'トータル時間': totalTime,
-      exercises_data: builderItems,
-    })
+    body: JSON.stringify(payload)
   });
   if (res.ok) {
-    showToast('日誌に保存しました！');
+    showToast(isUpdate ? '✅ メニューを更新しました！' : '日誌に保存しました！');
     builderItems = [];
+    builderEditingId = null;
     document.getElementById('builder-note').value = '';
+    const saveBtn = document.getElementById('builder-save-btn');
+    if (saveBtn) saveBtn.textContent = '📥 日誌に保存';
     renderBuilder();
     allMenus = await fetch('/api/menus').then(r=>r.json());
     filteredMenus = [...allMenus];
