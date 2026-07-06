@@ -2824,23 +2824,54 @@ async function registerPhotoResult() {
   if (!photoResultData) return;
   try {
     if (photoMode === 'material') {
-      // 材料として保存 — builderに追加してビルダーページへ
+      // 材料として /api/exercises に直接登録
       const items = Array.isArray(photoResultData) ? photoResultData : [photoResultData];
-      items.forEach(item => {
-        builderItems.push({
+      let saved = 0;
+      for (const item of items) {
+        const pat = parseInt(item['練習パターン']) || 3; // デフォルトEN1
+        const dist = parseInt(item['トータル']) || 0;
+        // 強度パターン→運動フィールドのマッピング (2=運動1, 3=運動2, ..., 8=運動7)
+        const intVals = { 運動1:0, 運動2:0, 運動3:0, 運動4:0, 運動5:0, 運動6:0, 運動7:0 };
+        const intKey = `運動${pat - 1}`; // pat=2→運動1, pat=3→運動2...
+        if (intKey in intVals) intVals[intKey] = dist;
+
+        // 種目名からカテゴリIDを解決
+        const mokLabel = (item['種目'] || '').toLowerCase();
+        let catId = 1;
+        const catMatch = categories.find(c => {
+          const n = (c['種目'] || c['名前'] || '').toLowerCase();
+          return n && mokLabel && (n.includes(mokLabel) || mokLabel.includes(n));
+        });
+        if (catMatch) catId = catMatch.ID;
+
+        const payload = {
           練習: item['練習'] || '',
           内容: item['内容'] || '',
           サイクル: item['サイクル'] || '',
-          トータル: item['トータル'] || 0,
-          全時間: item['全時間'] || 0,
-          練習パターン: item['練習パターン'] || null,
-          練習内容: item['練習内容'] || null,
+          全時間: parseInt(item['全時間']) || 0,
+          心拍数: 0,
+          練習内容: catId,
+          分類: parseInt(item['分類']) || 1,
+          練習パターン: pat,
+          トータル: dist,
+          ...intVals,
+        };
+        const r = await fetch('/api/exercises', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
         });
-      });
+        if (r.ok) saved++;
+      }
       closeModal('modal-photo');
-      showPage('builder');
-      renderBuilder();
-      showToast(`${items.length}件の材料をビルダーに追加しました`);
+      allExercises = await fetch('/api/exercises').then(r => r.json());
+      filteredExercises = [...allExercises];
+      matListFiltered = [...allExercises];
+      matIndex = allExercises.length - 1;
+      document.getElementById('mat-total').textContent = allExercises.length;
+      renderMatList();
+      showPage('material');
+      showToast(`${saved}件の材料を登録しました`);
     } else {
       // メニューとして保存
       const d = photoResultData;
