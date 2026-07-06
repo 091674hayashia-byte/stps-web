@@ -1962,7 +1962,7 @@ function filterBuilder() {
   let filtered = allExercises.filter(e => {
     if (cat   && String(e['練習内容']) !== cat)   return false;
     if (dist  && String(e['練習距離']) !== dist)  return false;
-    if (inten && String(e['練習内容']) !== inten) return false;
+    if (inten && String(e['練習パターン']) !== inten) return false;
     if (bun   && String(e['分類'])     !== bun)   return false;
     if (q) {
       const name    = (e['練習']||'').toLowerCase();
@@ -2495,8 +2495,8 @@ function renderMatList() {
 
   tbody.innerHTML = page.map(e => {
     const eid    = e.ID || e.id;
-    const iname  = INTENSITY_NAMES[e['練習内容']] || '-';
-    const badge  = INTENSITY_BADGE[e['練習内容']] || '';
+    const iname  = INTENSITY_NAMES[e['練習パターン']] || '-';
+    const badge  = INTENSITY_BADGE[e['練習パターン']] || '';
     const catName = getCatName(e['練習内容']);
     const isActive = eid == currentId;
     const isUser   = e._source === 'user';
