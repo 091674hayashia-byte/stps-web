@@ -735,7 +735,7 @@
   <div class="grid-2" style="align-items:start">
     <!-- 左：入力フォーム -->
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <div style="display:flex;align-items:center;gap:8px">
           <div class="card-title" style="margin:0">📝 材料作成</div>
           <button class="btn btn-sm" style="background:#f3e8ff;color:#7c3aed" onclick="openPhotoModal('material')">📷 写真から登録</button>
@@ -746,65 +746,124 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label>種目</label>
-        <select id="mat-category"></select>
+      <!-- モード切り替え -->
+      <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden">
+        <button id="mat-mode-single" onclick="switchMatMode('single')"
+          style="flex:1;padding:8px;border:none;cursor:pointer;font-weight:bold;background:var(--primary);color:#fff;font-size:13px">
+          📄 単発材料
+        </button>
+        <button id="mat-mode-set" onclick="switchMatMode('set')"
+          style="flex:1;padding:8px;border:none;cursor:pointer;font-weight:bold;background:#f0f0f0;color:#666;font-size:13px">
+          📦 セット材料
+        </button>
       </div>
-      <div class="form-group">
-        <label>メニュー（練習本数×セット数など）</label>
-        <input type="text" id="mat-menu" placeholder="例: 50x8、100x4x3">
-      </div>
-      <div class="form-group">
-        <label>内容</label>
-        <input type="text" id="mat-content" placeholder="例: 1-4Des+(1E+1H)x2">
-      </div>
-      <div class="form-group">
-        <label>サイクル</label>
-        <input type="text" id="mat-cycle" placeholder="例: 1'30、45&quot;">
-      </div>
-      <div class="form-row">
+
+      <!-- 単発材料フォーム -->
+      <div id="mat-single-form">
         <div class="form-group">
-          <label>全時間</label>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input type="number" id="mat-time" placeholder="秒" style="width:80px" oninput="updateMatTimeDisp()">
-            <span id="mat-time-disp" style="font-weight:bold;color:var(--blue);font-size:15px;min-width:70px">－</span>
-            <button class="btn" style="background:var(--blue-light);color:var(--blue);white-space:nowrap;font-size:12px" onclick="openTimeCalc()">時間電卓</button>
+          <label>種目</label>
+          <select id="mat-category"></select>
+        </div>
+        <div class="form-group">
+          <label>メニュー（練習本数×セット数など）</label>
+          <input type="text" id="mat-menu" placeholder="例: 50x8、100x4x3">
+        </div>
+        <div class="form-group">
+          <label>内容</label>
+          <input type="text" id="mat-content" placeholder="例: 1-4Des+(1E+1H)x2">
+        </div>
+        <div class="form-group">
+          <label>サイクル</label>
+          <input type="text" id="mat-cycle" placeholder="例: 1'30、45&quot;">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>全時間</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="mat-time" placeholder="秒" style="width:80px" oninput="updateMatTimeDisp()">
+              <span id="mat-time-disp" style="font-weight:bold;color:var(--blue);font-size:15px;min-width:70px">－</span>
+              <button class="btn" style="background:var(--blue-light);color:var(--blue);white-space:nowrap;font-size:12px" onclick="openTimeCalc()">時間電卓</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>HR（心拍数）</label>
+            <input type="number" id="mat-hr" placeholder="例: 160">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>練習距離</label>
+            <select id="mat-distance"></select>
+          </div>
+          <div class="form-group">
+            <label>練習パターン</label>
+            <select id="mat-pattern"></select>
           </div>
         </div>
         <div class="form-group">
-          <label>HR（心拍数）</label>
-          <input type="number" id="mat-hr" placeholder="例: 160">
+          <label>メニュー分類</label>
+          <select id="mat-bunrui"></select>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>練習距離</label>
-          <select id="mat-distance"></select>
+
+        <!-- ナビゲーションボタン -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;border-top:1px solid var(--border);padding-top:14px">
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav('first')" title="先頭へ">|‹</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav(-100)">‹100</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav(-10)">‹‹</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav(-1)">‹</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav(1)">›</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav(10)">››</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav(100)">100›</button>
+          <button class="btn btn-sm" style="background:#eee" onclick="matNav('last')" title="末尾へ">›|</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-sm" style="background:#f0fdf4;color:var(--green);border:1px solid var(--green)" onclick="matNew()">新入力</button>
+          <button class="btn btn-sm" style="background:#fff8e1;color:#b7770d;border:1px solid #f0c040" onclick="matCopy()">写す</button>
+          <button class="btn btn-primary btn-sm" onclick="matSave()">登録</button>
         </div>
-        <div class="form-group">
-          <label>練習パターン</label>
-          <select id="mat-pattern"></select>
-        </div>
-      </div>
-      <div class="form-group">
-        <label>メニュー分類</label>
-        <select id="mat-bunrui"></select>
       </div>
 
-      <!-- ナビゲーションボタン -->
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;border-top:1px solid var(--border);padding-top:14px">
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav('first')" title="先頭へ">|‹</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav(-100)">‹100</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav(-10)">‹‹</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav(-1)">‹</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav(1)">›</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav(10)">››</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav(100)">100›</button>
-        <button class="btn btn-sm" style="background:#eee" onclick="matNav('last')" title="末尾へ">›|</button>
-        <div style="flex:1"></div>
-        <button class="btn btn-sm" style="background:#f0fdf4;color:var(--green);border:1px solid var(--green)" onclick="matNew()">新入力</button>
-        <button class="btn btn-sm" style="background:#fff8e1;color:#b7770d;border:1px solid #f0c040" onclick="matCopy()">写す</button>
-        <button class="btn btn-primary btn-sm" onclick="matSave()">登録</button>
+      <!-- セット材料フォーム -->
+      <div id="mat-set-form" style="display:none">
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>セット名</label>
+            <input type="text" id="set-name" placeholder="例: セットスイム、メインセット">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>繰り返し回数</label>
+            <div style="display:flex;align-items:center;gap:6px">
+              <input type="number" id="set-repeat" value="1" min="1" style="width:70px">
+              <span style="font-weight:bold;color:var(--blue)">×</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:13px;font-weight:bold;color:var(--primary);margin-bottom:8px">練習リスト</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;font-size:12px;border-collapse:collapse" id="set-items-table">
+            <thead>
+              <tr style="background:var(--primary);color:#fff">
+                <th style="padding:6px 4px;text-align:left">種目</th>
+                <th style="padding:6px 4px;text-align:left">メニュー</th>
+                <th style="padding:6px 4px;text-align:left">内容</th>
+                <th style="padding:6px 4px;text-align:left">サイクル</th>
+                <th style="padding:6px 4px;text-align:right">距離(m)</th>
+                <th style="padding:6px 4px;text-align:right">時間(秒)</th>
+                <th style="padding:6px 4px;text-align:left">強度</th>
+                <th style="padding:6px 4px"></th>
+              </tr>
+            </thead>
+            <tbody id="set-items-tbody"></tbody>
+          </table>
+        </div>
+        <button class="btn btn-sm" style="margin-top:8px;background:#e8f5e9;color:var(--green);border:1px solid var(--green);width:100%" onclick="addSetRow()">＋ 行を追加</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+          <div style="font-size:13px;color:var(--gray)">
+            合計距離: <strong id="set-total-dist" style="color:var(--blue)">0m</strong>
+            ／ 合計時間: <strong id="set-total-time" style="color:var(--blue)">0秒</strong>
+            <span style="color:#aaa">（繰り返し含む）</span>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveSetMaterial()">📦 セット登録</button>
+        </div>
       </div>
     </div>
 
@@ -2078,9 +2137,19 @@ function filterBuilder() {
 function addToBuilder(id) {
   const ex = allExercises.find(e => (e.ID||e.id) == id);
   if (!ex) return;
-  builderItems.push(ex);
-  renderBuilder();
-  showToast('追加しました: ' + ex['練習']);
+  if (ex.type === 'set') {
+    const rep = parseInt(ex['繰り返し']) || 1;
+    const items = ex.items || [];
+    for (let r = 0; r < rep; r++) {
+      items.forEach(item => builderItems.push({...item}));
+    }
+    renderBuilder();
+    showToast(`セット「${ex['セット名']||ex['練習']}」を展開して追加（${rep}×${items.length}行）`);
+  } else {
+    builderItems.push(ex);
+    renderBuilder();
+    showToast('追加しました: ' + ex['練習']);
+  }
 }
 
 function removeFromBuilder(idx) {
@@ -2505,6 +2574,118 @@ async function matSave() {
   }
 }
 
+// ==================== セット材料 ====================
+let currentMatMode = 'single';
+let setRows = [];
+
+function switchMatMode(mode) {
+  currentMatMode = mode;
+  document.getElementById('mat-single-form').style.display = mode === 'single' ? '' : 'none';
+  document.getElementById('mat-set-form').style.display   = mode === 'set'    ? '' : 'none';
+  document.getElementById('mat-mode-single').style.background = mode === 'single' ? 'var(--primary)' : '#f0f0f0';
+  document.getElementById('mat-mode-single').style.color      = mode === 'single' ? '#fff' : '#666';
+  document.getElementById('mat-mode-set').style.background    = mode === 'set'    ? 'var(--primary)' : '#f0f0f0';
+  document.getElementById('mat-mode-set').style.color         = mode === 'set'    ? '#fff' : '#666';
+  if (mode === 'set' && setRows.length === 0) addSetRow();
+}
+
+function addSetRow() {
+  setRows.push({ 種目: '', 練習: '', 内容: '', サイクル: '', トータル: 0, 全時間: 0, 練習パターン: 3 });
+  renderSetRows();
+}
+
+function removeSetRow(i) {
+  setRows.splice(i, 1);
+  renderSetRows();
+}
+
+function getSetCatOptions() {
+  return categories.filter(c => c.ID >= 2 && c.ID <= 10)
+    .map(c => `<option value="${c.ID}">${(c['種目']||c['名前']||'').trim()}</option>`).join('');
+}
+
+function getSetIntOptions() {
+  return MAT_INTENSITY_IDS.map(id => {
+    const n = INTENSITY_NAMES[id] || id;
+    return `<option value="${id}">${n}</option>`;
+  }).join('');
+}
+
+function renderSetRows() {
+  const catOpts = getSetCatOptions();
+  const intOpts = getSetIntOptions();
+  const tbody = document.getElementById('set-items-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = setRows.map((r, i) => `
+    <tr style="border-bottom:1px solid #eee">
+      <td style="padding:4px 2px"><select onchange="setRows[${i}]['種目']=this.value" style="width:90px;font-size:11px;padding:3px">
+        <option value="">-</option>${catOpts.replace(`value="${r['種目']}"`, `value="${r['種目']}" selected`)}
+      </select></td>
+      <td style="padding:4px 2px"><input type="text" value="${r['練習']||''}" oninput="setRows[${i}]['練習']=this.value" style="width:80px;font-size:11px;padding:3px" placeholder="50x8"></td>
+      <td style="padding:4px 2px"><input type="text" value="${r['内容']||''}" oninput="setRows[${i}]['内容']=this.value" style="width:110px;font-size:11px;padding:3px" placeholder="Ave-Hard"></td>
+      <td style="padding:4px 2px"><input type="text" value="${r['サイクル']||''}" oninput="setRows[${i}]['サイクル']=this.value" style="width:60px;font-size:11px;padding:3px" placeholder="1'30"></td>
+      <td style="padding:4px 2px"><input type="number" value="${r['トータル']||0}" oninput="setRows[${i}]['トータル']=parseInt(this.value)||0;updateSetTotal()" style="width:65px;font-size:11px;padding:3px;text-align:right"></td>
+      <td style="padding:4px 2px"><input type="number" value="${r['全時間']||0}" oninput="setRows[${i}]['全時間']=parseInt(this.value)||0;updateSetTotal()" style="width:65px;font-size:11px;padding:3px;text-align:right"></td>
+      <td style="padding:4px 2px"><select onchange="setRows[${i}]['練習パターン']=parseInt(this.value)" style="width:65px;font-size:11px;padding:3px">
+        ${intOpts.replace(`value="${r['練習パターン']}"`, `value="${r['練習パターン']}" selected`)}
+      </select></td>
+      <td style="padding:4px 2px"><button onclick="removeSetRow(${i})" style="background:none;border:none;color:#e53935;cursor:pointer;font-size:16px">×</button></td>
+    </tr>`).join('');
+  updateSetTotal();
+}
+
+function updateSetTotal() {
+  const rep = parseInt(document.getElementById('set-repeat')?.value) || 1;
+  const dist = setRows.reduce((s,r) => s+(r['トータル']||0), 0) * rep;
+  const time = setRows.reduce((s,r) => s+(r['全時間']||0), 0) * rep;
+  const dEl = document.getElementById('set-total-dist');
+  const tEl = document.getElementById('set-total-time');
+  if (dEl) dEl.textContent = dist.toLocaleString() + 'm';
+  if (tEl) tEl.textContent = secToMinSec(time);
+}
+
+async function saveSetMaterial() {
+  const name = document.getElementById('set-name').value.trim();
+  const rep  = parseInt(document.getElementById('set-repeat').value) || 1;
+  if (!name) { showToast('セット名を入力してください', true); return; }
+  if (setRows.length === 0) { showToast('練習行を追加してください', true); return; }
+
+  const totalDist = setRows.reduce((s,r) => s+(r['トータル']||0), 0) * rep;
+  const totalTime = setRows.reduce((s,r) => s+(r['全時間']||0), 0) * rep;
+
+  const payload = {
+    type: 'set',
+    セット名: name,
+    繰り返し: rep,
+    練習: `${name}（${rep}×）`,
+    内容: `${setRows.length}セット`,
+    トータル: totalDist,
+    全時間: totalTime,
+    items: setRows.map(r => ({...r})),
+  };
+
+  const res = await fetch('/api/exercises', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (res.ok) {
+    showToast(`セット材料「${name}」を登録しました`);
+    allExercises = await fetch('/api/exercises').then(r=>r.json());
+    filteredExercises = [...allExercises];
+    matListFiltered = [...allExercises];
+    document.getElementById('mat-total').textContent = allExercises.length;
+    renderMatList();
+    // フォームリセット
+    document.getElementById('set-name').value = '';
+    document.getElementById('set-repeat').value = '1';
+    setRows = [];
+    addSetRow();
+  } else {
+    showToast('登録エラー', true);
+  }
+}
+
 function filterMatList() {
   const q   = document.getElementById('mat-list-search').value.toLowerCase();
   const src = document.getElementById('mat-list-source').value;
@@ -2555,22 +2736,31 @@ function renderMatList() {
 
   tbody.innerHTML = page.map(e => {
     const eid    = e.ID || e.id;
-    const iname  = INTENSITY_NAMES[e['練習パターン']] || '-';
-    const badge  = INTENSITY_BADGE[e['練習パターン']] || '';
-    const catName = getCatName(e['練習内容']);
+    const isSet  = e.type === 'set';
+    const iname  = isSet ? '-' : (INTENSITY_NAMES[e['練習パターン']] || '-');
+    const badge  = isSet ? '' : (INTENSITY_BADGE[e['練習パターン']] || '');
+    const catName = isSet
+      ? `<span style="background:#e8eaf6;color:#3949ab;font-size:11px;font-weight:bold;padding:2px 7px;border-radius:10px">📦セット</span>`
+      : getCatName(e['練習内容']);
     const isActive = eid == currentId;
     const isUser   = e._source === 'user';
     const timeSec  = e['全時間'] || 0;
     const timeDisp = timeSec ? secToMinSec(timeSec) : '-';
+    const menuCell = isSet
+      ? `<strong>${e['セット名']||e['練習']||''}</strong> <span style="font-size:11px;color:#7c3aed">${e['繰り返し']||1}×</span>`
+      : `<strong>${e['練習']||''}</strong>`;
+    const naiyouCell = isSet
+      ? `<span style="font-size:11px;color:var(--gray)">${(e.items||[]).length}種類のセット</span>`
+      : (e['内容']||'');
     return `<tr style="${isActive ? 'background:var(--blue-light);font-weight:bold' : ''};cursor:pointer" onclick="matJumpTo(${eid})">
       <td>${eid}${isUser ? ' <span class="badge badge-user" style="font-size:10px">新</span>' : ''}</td>
       <td style="white-space:nowrap">${catName}</td>
-      <td class="mat-content-cell" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)"><strong>${e['練習']||''}</strong></td>
-      <td class="mat-content-cell" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['内容']||''}</td>
-      <td>${e['サイクル']||''}</td>
+      <td class="mat-content-cell" style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${menuCell}</td>
+      <td class="mat-content-cell" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${naiyouCell}</td>
+      <td>${isSet ? '' : (e['サイクル']||'')}</td>
       <td>${(e['トータル']||0).toLocaleString()}m</td>
       <td style="white-space:nowrap">${timeDisp}</td>
-      <td><span class="badge ${badge}">${iname}</span></td>
+      <td>${isSet ? '' : `<span class="badge ${badge}">${iname}</span>`}</td>
       <td onclick="event.stopPropagation()">
         ${isUser ? `<button class="btn btn-danger btn-sm" onclick="matDelete(${eid})">削除</button>` : ''}
       </td>
