@@ -520,38 +520,16 @@
 </header>
 
 <nav>
-  <button class="active" onclick="showPage('dashboard')">📊 ダッシュボード</button>
-  <button onclick="showPage('journal')">📅 カレンダー</button>
-
+  <button class="active" onclick="showPage('journal')">📅 カレンダー</button>
   <button onclick="showPage('builder')">✏️ メニュー作成</button>
   <button onclick="showPage('material')">📝 材料作成</button>
 </nav>
 
 <main>
 
-<!-- ダッシュボード -->
-<div id="page-dashboard" class="page active">
-  <div class="grid-4" id="stat-cards" style="margin-bottom:20px">
-    <div class="stat-card"><div class="stat-value" id="stat-total">-</div><div class="stat-label">総練習回数</div></div>
-    <div class="stat-card green"><div class="stat-value" id="stat-dist">-</div><div class="stat-label">総距離 (km)</div></div>
-    <div class="stat-card orange"><div class="stat-value" id="stat-time">-</div><div class="stat-label">総時間 (時間)</div></div>
-    <div class="stat-card red"><div class="stat-value" id="stat-year">-</div><div class="stat-label">今年の練習回数</div></div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">📈 年別練習距離 (km)</div>
-      <div id="chart-yearly"></div>
-    </div>
-    <div class="card">
-      <div class="card-title">📅 最近の練習</div>
-      <div id="recent-list" class="loading">読み込み中...</div>
-    </div>
-  </div>
-</div>
 
 <!-- 練習日誌 -->
-<div id="page-journal" class="page">
+<div id="page-journal" class="page active">
   <div class="card">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <div class="card-title" style="margin:0">📅 練習日誌</div>
@@ -1078,7 +1056,6 @@ async function fetchAll() {
   filteredMenus = [...allMenus];
   filteredExercises = [...allExercises];
   buildMenuByDate();
-  initDashboard();
   initJournal();
   initBuilder();
   initMaterial();
@@ -1093,51 +1070,6 @@ function showPage(name) {
   event.target.classList.add('active');
 }
 
-// ==================== ダッシュボード ====================
-function initDashboard() {
-  const mdbMenus = allMenus.filter(m => m._source === 'mdb');
-  const totalDist = mdbMenus.reduce((s,m) => s + (m['トータル距離']||0), 0);
-  const totalTime = mdbMenus.reduce((s,m) => s + (m['トータル時間']||0), 0);
-  const thisYear = new Date().getFullYear();
-  const yearCount = mdbMenus.filter(m => {
-    const y = m['年'] || (m['日付'] ? new Date(m['日付']).getFullYear() : 0);
-    return y == thisYear;
-  }).length;
-
-  document.getElementById('stat-total').textContent = mdbMenus.length.toLocaleString();
-  document.getElementById('stat-dist').textContent = (totalDist/1000).toFixed(0).toLocaleString();
-  document.getElementById('stat-time').textContent = Math.round(totalTime/60).toLocaleString();
-  document.getElementById('stat-year').textContent = yearCount;
-
-  // 年別チャート
-  fetch('/api/stats').then(r=>r.json()).then(stats => {
-    const container = document.getElementById('chart-yearly');
-    const max = Math.max(...stats.map(s=>s.totalDistance));
-    const bars = stats.map(s => {
-      const pct = max > 0 ? (s.totalDistance/max*100) : 0;
-      return `<div class="bar-wrap">
-        <div class="bar-val">${(s.totalDistance/1000).toFixed(0)}</div>
-        <div class="bar" style="height:${Math.max(pct*1.8,2)}px" title="${s.year}年: ${(s.totalDistance/1000).toFixed(1)}km"></div>
-        <div class="bar-label">${s.year}</div>
-      </div>`;
-    }).join('');
-    container.innerHTML = `<div class="bar-chart">${bars}</div>`;
-  });
-
-  // 最近の練習
-  const recent = allMenus.slice(0, 8);
-  const html = recent.map(m => {
-    const date = m['日付'] || m.date || '';
-    const dist = m['トータル距離'] || m.dist || 0;
-    const note = m['一言'] || m.note || '';
-    return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:14px">
-      <span style="color:var(--blue);font-weight:500">${date}</span>
-      <span>${dist.toLocaleString()}m</span>
-      <span style="color:var(--gray);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
-    </div>`;
-  }).join('');
-  document.getElementById('recent-list').innerHTML = html || '<div class="empty">データなし</div>';
-}
 
 // ==================== カレンダー ====================
 let calYear = new Date().getFullYear();
