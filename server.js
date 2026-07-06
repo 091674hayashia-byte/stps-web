@@ -79,8 +79,91 @@ async function deleteUserMenu(id) {
   }
 }
 
+// ---- ユーザー材料データ：PostgreSQL or JSONファイル ----
+if (USE_DB) {
+  pgPool.query(`
+    CREATE TABLE IF NOT EXISTS user_exercises (
+      id BIGINT PRIMARY KEY,
+      data JSONB NOT NULL,
+      created_at TIMESTAMP DEFAULT NOW()
+    )
+  `).catch(e => console.error('DB init error (exercises):', e));
+}
+
+async function readUserExercises() {
+  if (USE_DB) {
+    const res = await pgPool.query('SELECT data FROM user_exercises ORDER BY id DESC');
+    return res.rows.map(r => r.data);
+  }
+  const file = path.join(DATA_DIR, 'user_exercises.json');
+  if (!fs.existsSync(file)) return [];
+  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return []; }
+}
+
+async function writeUserExercise(ex) {
+  if (USE_DB) {
+    await pgPool.query(
+      'INSERT INTO user_exercises (id, data) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET data=$2',
+      [ex._id, JSON.stringify(ex)]
+    );
+  } else {
+    const file = path.join(DATA_DIR, 'user_exercises.json');
+    let items = [];
+    if (fs.existsSync(file)) { try { items = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {} }
+    const idx = items.findIndex(m => m._id == ex._id);
+    if (idx >= 0) items[idx] = ex; else items.push(ex);
+    fs.writeFileSync(file, JSON.stringify(items, null, 2), 'utf8');
+  }
+}
+
+async function deleteUserExercise(id) {
+  if (USE_DB) {
+    await pgPool.query('DELETE FROM user_exercises WHERE id=$1', [id]);
+  } else {
+    const file = path.join(DATA_DIR, 'user_exercises.json');
+    if (!fs.existsSync(file)) return;
+    const items = JSON.parse(fs.readFileSync(file, 'utf8')).filter(m => m._id != id);
+    fs.writeFileSync(file, JSON.stringify(items, null, 2), 'utf8');
+  }
+}
+
 // ---- マスターデータAPI ----
-app.get('/api/exercises',   (req, res) => res.json(readJSON('exercises.json')));
+app.get('/api/exercises', async (req, res) => {
+  try {
+    const mdb  = readJSON('exercises.json').map(e => ({ ...e, _source: 'mdb' }));
+    const user = (await readUserExercises()).map(e => ({ ...e, _source: 'user' }));
+    res.json([...mdb, ...user]);
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.post('/api/exercises', async (req, res) => {
+  try {
+    const ex = { ...req.body, _id: Date.now(), _source: 'user', 作成日時: new Date().toISOString() };
+    // ID フィールドをセット（フロントが ID or id で参照するため）
+    ex.ID = ex._id;
+    await writeUserExercise(ex);
+    res.json({ ok: true, data: ex });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.put('/api/exercises/:id', async (req, res) => {
+  try {
+    const items = await readUserExercises();
+    const existing = items.find(m => m._id == req.params.id);
+    if (!existing) return res.status(404).json({ error: 'Not found' });
+    const updated = { ...existing, ...req.body };
+    await writeUserExercise(updated);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+app.delete('/api/exercises/:id', async (req, res) => {
+  try {
+    await deleteUserExercise(req.params.id);
+    res.json({ ok: true });
+  } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 app.get('/api/intensities', (req, res) => res.json(readJSON('intensities.json')));
 app.get('/api/categories',  (req, res) => res.json(readJSON('categories.json')));
 app.get('/api/distances',   (req, res) => res.json(readJSON('distances.json')));
