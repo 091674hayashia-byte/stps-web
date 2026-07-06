@@ -2137,17 +2137,12 @@ function filterBuilder() {
 function addToBuilder(id) {
   const ex = allExercises.find(e => (e.ID||e.id) == id);
   if (!ex) return;
+  // セット・単発どちらもそのまま1アイテムとして追加
+  builderItems.push({...ex});
+  renderBuilder();
   if (ex.type === 'set') {
-    const rep = parseInt(ex['繰り返し']) || 1;
-    const items = ex.items || [];
-    for (let r = 0; r < rep; r++) {
-      items.forEach(item => builderItems.push({...item}));
-    }
-    renderBuilder();
-    showToast(`セット「${ex['セット名']||ex['練習']}」を展開して追加（${rep}×${items.length}行）`);
+    showToast(`セット「${ex['セット名']||ex['練習']}」を追加しました`);
   } else {
-    builderItems.push(ex);
-    renderBuilder();
     showToast('追加しました: ' + ex['練習']);
   }
 }
@@ -2170,6 +2165,42 @@ function renderBuilder() {
   const intervalSec = (builderItems.length > 1 ? builderItems.length - 1 : 0) * 60;
   const totalTime = builderItems.reduce((s,e) => s+(e['全時間']||0), 0) + intervalSec;
   tbody.innerHTML = builderItems.map((e,i) => {
+    if (e.type === 'set') {
+      // セット材料：コンパクトブロックとして1行で表示
+      const rep = e['繰り返し'] || 1;
+      const items = e.items || [];
+      const subRows = items.map(r => {
+        const cn = (categories.find(c => c.ID == r['練習内容']) || {})['種目'] || (r['種目']||'');
+        const ib = INTENSITY_BADGE[r['練習パターン']] || '';
+        const in2 = INTENSITY_NAMES[r['練習パターン']] || '';
+        return `<tr style="background:#f5f3ff">
+          <td style="padding:2px 8px;font-size:11px;color:#888">${cn}</td>
+          <td style="padding:2px 4px;font-size:11px;font-weight:bold">${r['練習']||''}</td>
+          <td style="padding:2px 4px;font-size:11px;color:#555">${r['内容']||''}</td>
+          <td style="padding:2px 4px;font-size:11px;color:var(--blue)">${r['サイクル']||''}</td>
+          <td style="padding:2px 4px;font-size:11px;text-align:right">${(r['トータル']||0)}m</td>
+          <td style="padding:2px 4px;font-size:11px;text-align:right">${r['全時間'] ? secToMinSec(r['全時間']) : '-'}</td>
+          <td style="padding:2px 4px"><span class="badge ${ib}" style="font-size:10px">${in2}</span></td>
+        </tr>`;
+      }).join('');
+      return `<tr draggable="true" data-idx="${i}"
+          ondragstart="builderDragStart(event,${i})"
+          ondragover="builderDragOver(event)"
+          ondrop="builderDrop(event,${i})"
+          ondragend="builderDragEnd()"
+          style="cursor:grab;background:#ede7f6">
+        <td style="padding:4px 6px;color:#aaa;font-size:16px;cursor:grab;user-select:none">⠿</td>
+        <td colspan="7" style="padding:4px 6px">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+            <span style="font-weight:bold;color:#5e35b1;font-size:13px">📦 ${e['セット名']||e['練習']||'セット'}</span>
+            <span style="background:#7c3aed;color:#fff;font-size:12px;font-weight:bold;padding:2px 8px;border-radius:10px">${rep}×</span>
+            <span style="font-size:12px;color:#666">${(e['トータル']||0).toLocaleString()}m / ${e['全時間'] ? secToMinSec(e['全時間']) : '-'}</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse">${subRows}</table>
+        </td>
+        <td><button class="btn btn-danger btn-sm" onclick="removeFromBuilder(${i})">✕</button></td>
+      </tr>`;
+    }
     const badge = INTENSITY_BADGE[e['練習パターン']] || '';
     const iname = INTENSITY_NAMES[e['練習パターン']] || '';
     const timeDisp = e['全時間'] ? secToMinSec(e['全時間']) : '-';
