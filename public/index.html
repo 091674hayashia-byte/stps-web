@@ -2113,7 +2113,7 @@ function renderBuilder() {
         style="cursor:grab">
       <td style="padding:2px 6px;color:#aaa;font-size:16px;cursor:grab;user-select:none" title="ドラッグして移動">⠿</td>
       <td style="font-size:12px;white-space:nowrap;color:var(--blue);font-weight:600">${catName}</td>
-      <td><strong>${e['練習']||''}</strong></td>
+      <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e['練習']||''}"><strong>${e['練習']||''}</strong></td>
       <td class="mat-content-cell" style="font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="toggleMatContent(this)">${e['内容']||''}</td>
       <td class="mat-content-cell" style="font-size:12px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);cursor:zoom-in" title="クリックで展開" onclick="toggleMatContent(this)">${e['サイクル']||''}</td>
       <td style="white-space:nowrap">${(e['トータル']||0).toLocaleString()}m</td>
@@ -2565,7 +2565,7 @@ function renderMatList() {
     return `<tr style="${isActive ? 'background:var(--blue-light);font-weight:bold' : ''};cursor:pointer" onclick="matJumpTo(${eid})">
       <td>${eid}${isUser ? ' <span class="badge badge-user" style="font-size:10px">新</span>' : ''}</td>
       <td style="white-space:nowrap">${catName}</td>
-      <td><strong>${e['練習']||''}</strong></td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e['練習']||''}"><strong>${e['練習']||''}</strong></td>
       <td class="mat-content-cell" style="font-size:12px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['内容']||''}</td>
       <td>${e['サイクル']||''}</td>
       <td>${(e['トータル']||0).toLocaleString()}m</td>
