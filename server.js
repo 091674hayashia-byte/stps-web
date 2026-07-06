@@ -138,9 +138,11 @@ app.get('/api/exercises', async (req, res) => {
 
 app.post('/api/exercises', async (req, res) => {
   try {
-    const ex = { ...req.body, _id: Date.now(), _source: 'user', 作成日時: new Date().toISOString() };
-    // ID フィールドをセット（フロントが ID or id で参照するため）
-    ex.ID = ex._id;
+    const mdb  = readJSON('exercises.json');
+    const user = await readUserExercises();
+    const allIds = [...mdb, ...user].map(e => parseInt(e.ID || e.id || e._id) || 0);
+    const nextId = (allIds.length ? Math.max(...allIds) : 0) + 1;
+    const ex = { ...req.body, _id: nextId, ID: nextId, _source: 'user', 作成日時: new Date().toISOString() };
     await writeUserExercise(ex);
     res.json({ ok: true, data: ex });
   } catch (e) { res.status(500).json({ error: e.message }); }
