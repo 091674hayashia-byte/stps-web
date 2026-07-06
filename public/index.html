@@ -1999,8 +1999,8 @@ function filterBuilder() {
   }
   tbody.innerHTML = filtered.map(e => {
     const eid   = e.ID || e.id;
-    const badge = INTENSITY_BADGE[e['練習内容']] || '';
-    const iname = INTENSITY_NAMES[e['練習内容']] || '';
+    const badge = INTENSITY_BADGE[e['練習パターン']] || '';
+    const iname = INTENSITY_NAMES[e['練習パターン']] || '';
     const timeDisp = e['全時間'] ? secToMinSec(e['全時間']) : '';
     return `<tr>
       <td style="color:var(--gray);font-size:12px">${eid}</td>
@@ -2041,8 +2041,8 @@ function renderBuilder() {
   const intervalSec = (builderItems.length > 1 ? builderItems.length - 1 : 0) * 60;
   const totalTime = builderItems.reduce((s,e) => s+(e['全時間']||0), 0) + intervalSec;
   tbody.innerHTML = builderItems.map((e,i) => {
-    const badge = INTENSITY_BADGE[e['練習内容']] || '';
-    const iname = INTENSITY_NAMES[e['練習内容']] || '';
+    const badge = INTENSITY_BADGE[e['練習パターン']] || '';
+    const iname = INTENSITY_NAMES[e['練習パターン']] || '';
     const timeDisp = e['全時間'] ? secToMinSec(e['全時間']) : '-';
     const catName = (categories.find(c => c.ID == e['練習内容']) || {})['種目'] || '';
     return `<tr draggable="true" data-idx="${i}"
