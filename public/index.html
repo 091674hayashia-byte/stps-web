@@ -2064,7 +2064,7 @@ function filterBuilder() {
     const timeDisp = e['全時間'] ? secToMinSec(e['全時間']) : '';
     return `<tr>
       <td style="color:var(--gray);font-size:12px">${eid}</td>
-      <td><strong>${e['練習']||''}</strong>${timeDisp ? `<div style="font-size:11px;color:var(--gray)">${timeDisp}</div>` : ''}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${e['練習']||''}"><strong>${e['練習']||''}</strong>${timeDisp ? `<span style="font-size:11px;color:var(--gray);margin-left:4px">${timeDisp}</span>` : ''}</td>
       <td class="mat-content-cell" style="font-size:12px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:zoom-in"
           title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['内容']||''}</td>
       <td class="mat-content-cell" style="font-size:12px;max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--blue);cursor:zoom-in" title="クリックで展開" onclick="event.stopPropagation();toggleMatContent(this)">${e['サイクル']||''}</td>
