@@ -1767,6 +1767,47 @@ function buildSingleMenuHtml(menu) {
   let rows = '';
   if (exercises.length) {
     rows = exercises.map(e => {
+      // セット材料の場合
+      if (e.type === 'set') {
+        const rep = e['繰り返し'] || 1;
+        const items = e.items || [];
+        const setDist = e['トータル'] || 0;
+        const setSec  = e['全時間'] || 0;
+        cumSec += setSec;
+        const cumMin = Math.round(cumSec / 60);
+        const setMin = setSec ? Math.round(setSec / 60) : null;
+        const subHtml = items.map(r => {
+          const cn  = (categories.find(c => c.ID == r['練習内容']) || {})['種目'] || (r['種目'] || '');
+          const ib  = INTENSITY_BADGE[r['練習パターン']] || '';
+          const inp = INTENSITY_NAMES[r['練習パターン']] || '';
+          const rMin = r['全時間'] ? Math.round(r['全時間']/60) : null;
+          return `<tr style="background:#f5f3ff">
+            <td class="ps-cat" style="font-size:11px;color:#888;padding-left:16px">↳ ${cn}</td>
+            <td class="ps-main" style="font-size:12px">
+              <div class="ps-name" style="font-size:12px">${r['練習']||''}</div>
+              ${r['内容'] ? `<div class="ps-content">${r['内容']}</div>` : ''}
+            </td>
+            <td class="ps-num" style="font-size:11px">${r['サイクル']||'-'}</td>
+            <td class="ps-num" style="font-size:11px">${r['トータル'] ? r['トータル']+'m' : '-'}</td>
+            <td class="ps-int">${inp ? `<span class="ps-badge ${ib}" style="font-size:10px">${inp}</span>` : '-'}</td>
+            <td class="ps-num" style="font-size:11px">${rMin !== null ? rMin+'分' : '-'}</td>
+            <td class="ps-num ps-cum">-</td>
+          </tr>`;
+        }).join('');
+        return `<tr style="background:#ede7f6">
+          <td class="ps-cat"><span style="background:#7c3aed;color:#fff;font-size:10px;padding:2px 6px;border-radius:8px">📦セット</span></td>
+          <td class="ps-main">
+            <div class="ps-name" style="color:#5e35b1">${e['セット名']||e['練習']||'セット'} <span style="background:#7c3aed;color:#fff;font-size:11px;padding:1px 6px;border-radius:8px">${rep}×</span></div>
+          </td>
+          <td class="ps-num">-</td>
+          <td class="ps-num">${setDist ? setDist.toLocaleString()+'m' : '-'}</td>
+          <td class="ps-int">-</td>
+          <td class="ps-num">${setMin !== null ? setMin+'分' : '-'}</td>
+          <td class="ps-num ps-cum">${cumMin}分</td>
+        </tr>${subHtml}`;
+      }
+
+      // 通常材料
       const catName  = (categories.find(c => c.ID == e['練習内容']) || {})['種目'] || '';
       const menuName = e['練習'] || '';
       const content  = e['内容'] || '';
