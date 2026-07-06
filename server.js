@@ -1,6 +1,11 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
+const multer  = require('multer');
+const Anthropic = require('@anthropic-ai/sdk');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -118,6 +123,77 @@ app.delete('/api/menus/:id', async (req, res) => {
     await deleteUserMenu(req.params.id);
     res.json({ ok: true });
   } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// ---- 写真解析API ----
+app.post('/api/analyze-photo', upload.single('photo'), async (req, res) => {
+  if (!process.env.ANTHROPIC_API_KEY) return res.status(500).json({ error: 'APIキーが設定されていません' });
+  if (!req.file) return res.status(400).json({ error: '画像がありません' });
+  try {
+    const base64 = req.file.buffer.toString('base64');
+    const mediaType = req.file.mimetype || 'image/jpeg';
+    const mode = req.body.mode || 'menu'; // 'menu' or 'material'
+
+    const prompt = mode === 'material'
+      ? `この画像は水泳の練習材料（個別のセット練習）の写真です。
+以下のJSON形式で内容を抽出してください。複数のセットがある場合は配列で返してください。
+
+[
+  {
+    "練習": "練習名（例：100x8）",
+    "内容": "詳細内容（例：Descend 1-4）",
+    "サイクル": "サイクル（例：1:30）",
+    "トータル": 数値（合計距離メートル）,
+    "全時間": 数値（秒）,
+    "練習パターン": 数値（2=AE, 3=EN1, 4=EN2, 5=EN3, 6=AN1, 7=AN2, 8=AN3）
+  }
+]
+
+JSONのみ返してください。`
+      : `この画像は水泳の練習メニューの写真です。
+以下のJSON形式で内容を抽出してください。
+
+{
+  "日付": "YYYY-MM-DD形式（不明の場合は今日の日付）",
+  "ampm": "AM or PM",
+  "一言": "メニュー全体のコメントや目標（あれば）",
+  "トータル距離": 数値（合計距離メートル）,
+  "トータル時間": 数値（分）,
+  "exercises": [
+    {
+      "練習": "練習名（例：100x8）",
+      "内容": "詳細内容",
+      "サイクル": "サイクル",
+      "トータル": 数値（距離メートル）,
+      "全時間": 数値（秒）,
+      "練習パターン": 数値（2=AE, 3=EN1, 4=EN2, 5=EN3, 6=AN1, 7=AN2, 8=AN3）
+    }
+  ]
+}
+
+JSONのみ返してください。`;
+
+    const response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 2000,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    });
+
+    const text = response.content[0].text.trim();
+    const jsonMatch = text.match(/\[[\s\S]*\]|\{[\s\S]*\}/);
+    if (!jsonMatch) return res.status(422).json({ error: '解析結果を取得できませんでした' });
+    const parsed = JSON.parse(jsonMatch[0]);
+    res.json({ ok: true, data: parsed, mode });
+  } catch (e) {
+    console.error('analyze-photo error:', e);
+    res.status(500).json({ error: e.message });
+  }
 });
 
 // ---- 統計API ----

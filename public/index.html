@@ -568,6 +568,7 @@
           <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px">
             <div class="cal-detail-title" id="cal-detail-title" style="margin:0"></div>
             <button class="btn btn-primary btn-sm" id="cal-detail-edit-btn" onclick="openBuilderForDate()">✏️ この日のメニューを作成</button>
+            <button class="btn btn-sm" style="background:#f3e8ff;color:#7c3aed" onclick="openPhotoModal('menu')">📷 写真から登録</button>
           </div>
           <div id="cal-detail-body"></div>
         </div>
@@ -735,7 +736,10 @@
     <!-- 左：入力フォーム -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div class="card-title" style="margin:0">📝 材料作成</div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div class="card-title" style="margin:0">📝 材料作成</div>
+          <button class="btn btn-sm" style="background:#f3e8ff;color:#7c3aed" onclick="openPhotoModal('material')">📷 写真から登録</button>
+        </div>
         <div style="font-size:13px;color:var(--gray)">
           登録NO <strong id="mat-reg-no" style="color:var(--blue);font-size:16px">-</strong>
           現在の登録数 <strong id="mat-total" style="color:var(--text)">-</strong>
@@ -1025,6 +1029,62 @@
       </div>
     </div>
     <div id="detail-content"></div>
+  </div>
+</div>
+
+<!-- 写真解析モーダル -->
+<div class="modal-overlay" id="modal-photo">
+  <div class="modal" style="max-width:600px;width:95%">
+    <div class="modal-header">
+      <div class="modal-title" id="photo-modal-title">📷 写真から登録</div>
+      <button class="modal-close" onclick="closeModal('modal-photo')">×</button>
+    </div>
+
+    <!-- Step1: アップロード -->
+    <div id="photo-step1">
+      <p style="font-size:13px;color:var(--gray);margin-bottom:12px">練習メニューや材料が写っている写真を選択してください。</p>
+      <div id="photo-drop-area" style="border:2px dashed #c4b5fd;border-radius:12px;padding:32px;text-align:center;cursor:pointer;background:#faf5ff;transition:background 0.2s"
+        onclick="document.getElementById('photo-file-input').click()"
+        ondragover="event.preventDefault();this.style.background='#ede9fe'"
+        ondragleave="this.style.background='#faf5ff'"
+        ondrop="handlePhotoDrop(event)">
+        <div style="font-size:40px;margin-bottom:8px">📷</div>
+        <div style="font-size:14px;color:#7c3aed;font-weight:bold">クリックまたはドラッグで写真を選択</div>
+        <div style="font-size:12px;color:var(--gray);margin-top:4px">JPG / PNG / HEIC 対応</div>
+      </div>
+      <input type="file" id="photo-file-input" accept="image/*" style="display:none" onchange="handlePhotoSelect(event)">
+      <div id="photo-preview-wrap" style="display:none;margin-top:12px;text-align:center">
+        <img id="photo-preview-img" style="max-width:100%;max-height:300px;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.15)">
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div style="font-size:13px;color:var(--text);font-weight:bold">登録種別：</div>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px">
+          <input type="radio" name="photo-mode" value="menu" checked> 練習メニュー（日誌）
+        </label>
+        <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:13px">
+          <input type="radio" name="photo-mode" value="material"> 材料
+        </label>
+      </div>
+      <div style="margin-top:16px;text-align:right">
+        <button class="btn btn-primary" id="photo-analyze-btn" onclick="analyzePhoto()" disabled>🔍 AIで解析する</button>
+      </div>
+    </div>
+
+    <!-- Step2: 解析中 -->
+    <div id="photo-step2" style="display:none;text-align:center;padding:32px">
+      <div style="font-size:36px;margin-bottom:12px">⏳</div>
+      <div style="font-size:15px;font-weight:bold;color:#7c3aed">AIが解析中...</div>
+      <div style="font-size:12px;color:var(--gray);margin-top:6px">しばらくお待ちください</div>
+    </div>
+
+    <!-- Step3: 確認・編集 -->
+    <div id="photo-step3" style="display:none">
+      <div id="photo-result-body"></div>
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:#eee" onclick="photoBackToStep1()">← 撮り直す</button>
+        <button class="btn btn-primary" onclick="registerPhotoResult()">✅ 登録する</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -2649,6 +2709,169 @@ function updateMatTimeDisp() {
 
 // 起動
 fetchAll();
+
+// ==================== 写真から登録 ====================
+let photoMode = 'menu';
+let photoFile = null;
+let photoResultData = null;
+
+function openPhotoModal(mode) {
+  photoMode = mode || 'menu';
+  photoFile = null;
+  photoResultData = null;
+  document.getElementById('photo-modal-title').textContent = mode === 'material' ? '📷 写真から材料登録' : '📷 写真からメニュー登録';
+  document.getElementById('photo-preview-wrap').style.display = 'none';
+  document.getElementById('photo-analyze-btn').disabled = true;
+  document.getElementById('photo-file-input').value = '';
+  document.getElementById('photo-step1').style.display = '';
+  document.getElementById('photo-step2').style.display = 'none';
+  document.getElementById('photo-step3').style.display = 'none';
+  // Set radio
+  document.querySelectorAll('input[name="photo-mode"]').forEach(r => r.checked = (r.value === photoMode));
+  document.getElementById('modal-photo').classList.add('open');
+}
+
+function handlePhotoSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  photoFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('photo-preview-img').src = url;
+  document.getElementById('photo-preview-wrap').style.display = '';
+  document.getElementById('photo-analyze-btn').disabled = false;
+}
+
+function handlePhotoDrop(e) {
+  e.preventDefault();
+  document.getElementById('photo-drop-area').style.background = '#faf5ff';
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith('image/')) return;
+  photoFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('photo-preview-img').src = url;
+  document.getElementById('photo-preview-wrap').style.display = '';
+  document.getElementById('photo-analyze-btn').disabled = false;
+}
+
+async function analyzePhoto() {
+  if (!photoFile) return;
+  const modeEl = document.querySelector('input[name="photo-mode"]:checked');
+  photoMode = modeEl ? modeEl.value : 'menu';
+
+  document.getElementById('photo-step1').style.display = 'none';
+  document.getElementById('photo-step2').style.display = '';
+
+  const fd = new FormData();
+  fd.append('photo', photoFile);
+  fd.append('mode', photoMode);
+
+  try {
+    const res = await fetch('/api/analyze-photo', { method: 'POST', body: fd });
+    const json = await res.json();
+    if (!res.ok || !json.ok) throw new Error(json.error || '解析失敗');
+    photoResultData = json.data;
+    showPhotoResult(json.data, photoMode);
+  } catch(e) {
+    document.getElementById('photo-step2').style.display = 'none';
+    document.getElementById('photo-step1').style.display = '';
+    showToast('解析エラー: ' + e.message, true);
+  }
+}
+
+function showPhotoResult(data, mode) {
+  document.getElementById('photo-step2').style.display = 'none';
+  document.getElementById('photo-step3').style.display = '';
+
+  let html = '';
+  if (mode === 'material') {
+    const items = Array.isArray(data) ? data : [data];
+    html = `<div style="font-size:13px;font-weight:bold;color:var(--primary);margin-bottom:8px">解析結果（${items.length}件）— 内容を確認して登録してください</div>`;
+    items.forEach((item, i) => {
+      html += `<div style="border:1px solid #e0e0e0;border-radius:8px;padding:12px;margin-bottom:8px;background:#fafafa">
+        <div style="font-weight:bold;margin-bottom:4px">📦 ${item['練習'] || '材料'+(i+1)}</div>
+        ${item['内容'] ? `<div style="font-size:12px;color:var(--gray)">内容: ${item['内容']}</div>` : ''}
+        ${item['サイクル'] ? `<div style="font-size:12px">サイクル: ${item['サイクル']}</div>` : ''}
+        ${item['トータル'] ? `<div style="font-size:12px">距離: ${item['トータル']}m</div>` : ''}
+      </div>`;
+    });
+  } else {
+    const exercises = data.exercises || [];
+    html = `<div style="font-size:13px;font-weight:bold;color:var(--primary);margin-bottom:8px">解析結果 — 内容を確認して登録してください</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;font-size:13px">
+        ${data['日付'] ? `<span>📅 ${data['日付']}</span>` : ''}
+        ${data['ampm'] ? `<span>🕐 ${data['ampm']}</span>` : ''}
+        ${data['トータル距離'] ? `<span>📏 ${data['トータル距離']}m</span>` : ''}
+      </div>
+      ${data['一言'] ? `<div style="font-size:12px;color:var(--gray);margin-bottom:8px;padding:8px;background:#f5f5f5;border-radius:6px">${data['一言']}</div>` : ''}`;
+    exercises.forEach((ex, i) => {
+      html += `<div style="border:1px solid #e0e0e0;border-radius:8px;padding:10px;margin-bottom:6px;background:#fafafa;font-size:12px">
+        <div style="font-weight:bold">${ex['練習'] || 'セット'+(i+1)}</div>
+        ${ex['内容'] ? `<div style="color:var(--gray)">${ex['内容']}</div>` : ''}
+        ${ex['サイクル'] ? `<span style="margin-right:8px">⏱ ${ex['サイクル']}</span>` : ''}
+        ${ex['トータル'] ? `<span>📏 ${ex['トータル']}m</span>` : ''}
+      </div>`;
+    });
+  }
+  document.getElementById('photo-result-body').innerHTML = html;
+}
+
+function photoBackToStep1() {
+  document.getElementById('photo-step3').style.display = 'none';
+  document.getElementById('photo-step1').style.display = '';
+}
+
+async function registerPhotoResult() {
+  if (!photoResultData) return;
+  try {
+    if (photoMode === 'material') {
+      // 材料として保存 — builderに追加してビルダーページへ
+      const items = Array.isArray(photoResultData) ? photoResultData : [photoResultData];
+      items.forEach(item => {
+        builderItems.push({
+          練習: item['練習'] || '',
+          内容: item['内容'] || '',
+          サイクル: item['サイクル'] || '',
+          トータル: item['トータル'] || 0,
+          全時間: item['全時間'] || 0,
+          練習パターン: item['練習パターン'] || null,
+          練習内容: item['練習内容'] || null,
+        });
+      });
+      closeModal('modal-photo');
+      showPage('builder');
+      renderBuilder();
+      showToast(`${items.length}件の材料をビルダーに追加しました`);
+    } else {
+      // メニューとして保存
+      const d = photoResultData;
+      const exercises = d.exercises || [];
+      const payload = {
+        日付: d['日付'] || new Date().toISOString().slice(0, 10),
+        ampm: d['ampm'] || 'AM',
+        一言: d['一言'] || '',
+        トータル距離: d['トータル距離'] || 0,
+        トータル時間: d['トータル時間'] || 0,
+        exercises,
+        _photoRegistered: true,
+      };
+      const res = await fetch('/api/menus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error('保存失敗');
+      closeModal('modal-photo');
+      allMenus = await fetch('/api/menus').then(r => r.json());
+      filteredMenus = [...allMenus];
+      buildMenuByDate();
+      renderCalView();
+      filterJournal();
+      showToast('メニューを登録しました');
+    }
+  } catch(e) {
+    showToast('登録エラー: ' + e.message, true);
+  }
+}
 </script>
 </body>
 </html>
