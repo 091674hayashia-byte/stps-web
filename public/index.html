@@ -1572,7 +1572,8 @@ function buildMenuDetailHtml(menu) {
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-sm" style="background:var(--blue-light);color:var(--blue)" onclick="showMenuPrint(${mJson})">🖨️ 印刷</button>
-          ${menu._source === 'user' && menu._id ? `<button class="btn btn-sm" style="background:#e8f4fd;color:var(--blue)" onclick="editMenuInBuilder(${mJson})">✏️ 編集</button>` : `<button class="btn btn-sm" style="background:#fff8e1;color:#b8860b" onclick="copyMenuToBuilder(${mJson})">📋 コピーして編集</button>`}
+          <button class="btn btn-sm" style="background:#fff8e1;color:#b8860b" onclick="copyMenuToBuilder(${mJson})">📋 コピーして編集</button>
+          ${menu._source === 'user' && menu._id ? `<button class="btn btn-sm" style="background:#e8f4fd;color:var(--blue)" onclick="editMenuInBuilder(${mJson})">✏️ 編集</button>` : ''}
           <button class="btn btn-sm" style="background:#f0fdf4;color:var(--green)" onclick="openBuilderForDate('${date}')">✏️ 新規作成</button>
           ${menu._source === 'user' && menu._id ? `<button class="btn btn-sm" style="background:#fdf0f0;color:var(--red)" onclick="deleteMenuFromCal(${menu._id})">🗑️ 削除</button>` : ''}
         </div>
