@@ -430,7 +430,9 @@
   .pm-grid-3,
   .pm-grid-4,
   .pm-grid-5,
-  .pm-grid-6 { column-count: 2; column-gap: 10px; }
+  .pm-grid-6,
+  .pm-grid-7,
+  .pm-grid-8 { column-count: 2; column-gap: 10px; }
 
   @media print {
     @page { size: A4 portrait; margin: 10mm; }
@@ -491,7 +493,7 @@
     .pm-int-table th { background: #e8e8e8 !important; }
     .pm-footer { color: #000 !important; }
 
-    .pm-grid-1,.pm-grid-2,.pm-grid-3,.pm-grid-4,.pm-grid-5,.pm-grid-6 { gap: 4px !important; }
+    .pm-grid-1,.pm-grid-2,.pm-grid-3,.pm-grid-4,.pm-grid-5,.pm-grid-6,.pm-grid-7,.pm-grid-8 { gap: 4px !important; }
     .pm-cell { border: 1px solid #555 !important; }
     /* 6枚をA4一枚に収める */
     .pm-grid-6 .pm-cell,
@@ -506,6 +508,18 @@
     .pm-grid-5 .pm-cell-int td { font-size: 8px !important; padding: 1px 3px !important; }
     .pm-grid-6 .c-sub,
     .pm-grid-5 .c-sub { font-size: 8px !important; }
+    .pm-grid-7 .pm-cell,
+    .pm-grid-8 .pm-cell { font-size: 8px !important; }
+    .pm-grid-7 .pm-cell td,
+    .pm-grid-8 .pm-cell td { font-size: 8px !important; padding: 0px 2px !important; }
+    .pm-grid-7 .pm-cell-header,
+    .pm-grid-8 .pm-cell-header { font-size: 9px !important; padding-bottom: 1px !important; margin-bottom: 2px !important; }
+    .pm-grid-7 .pm-cell-int th,
+    .pm-grid-7 .pm-cell-int td,
+    .pm-grid-8 .pm-cell-int th,
+    .pm-grid-8 .pm-cell-int td { font-size: 7px !important; padding: 1px 2px !important; }
+    .pm-grid-7 .c-sub,
+    .pm-grid-8 .c-sub { font-size: 7px !important; }
   }
 </style>
 </head>
@@ -1036,14 +1050,14 @@
 <div class="modal-overlay" id="modal-print-select">
   <div class="modal" style="max-width:520px;width:96%;max-height:88vh;overflow-y:auto">
     <div class="modal-header">
-      <div class="modal-title">🖨️ 印刷するメニューを選択（最大6件）</div>
+      <div class="modal-title">🖨️ 印刷するメニューを選択（最大8件）</div>
       <button class="modal-close" onclick="closeModal('modal-print-select')">×</button>
     </div>
     <div style="padding:12px 16px">
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
         <input type="text" id="print-select-search" placeholder="日付・内容で絞り込み..." oninput="renderPrintSelectList()"
           style="flex:1;min-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px">
-        <span id="print-select-count" style="font-size:13px;color:var(--blue);font-weight:bold;white-space:nowrap">0 / 6 件選択</span>
+        <span id="print-select-count" style="font-size:13px;color:var(--blue);font-weight:bold;white-space:nowrap">0 / 8 件選択</span>
       </div>
       <div id="print-select-list" style="display:flex;flex-direction:column;gap:4px;max-height:52vh;overflow-y:auto"></div>
       <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px">
@@ -1068,6 +1082,8 @@
           <option value="4">4件</option>
           <option value="5">5件</option>
           <option value="6">6件</option>
+          <option value="7">7件</option>
+          <option value="8">8件</option>
         </select>
         <button class="btn btn-primary btn-sm" onclick="window.print()">🖨️ 印刷</button>
         <button class="modal-close" onclick="closeModal('modal-print')">×</button>
@@ -1999,13 +2015,13 @@ function showMultiMenuPrint(menus) {
   _printTargetMenus = menus;
   if (_printTargetMenus.length === 1) _printTargetMenu = menus[0];
   const count = menus.length;
-  document.getElementById('print-mode').value = String(Math.min(count, 6));
+  document.getElementById('print-mode').value = String(Math.min(count, 8));
   renderPrintContent(count);
   document.getElementById('modal-print').classList.add('open');
 }
 
 function renderPrintContent(count) {
-  const n = Math.max(1, Math.min(6, parseInt(count) || 1));
+  const n = Math.max(1, Math.min(8, parseInt(count) || 1));
   const base = _printTargetMenus.length
     ? _printTargetMenus
     : [...allMenus].sort((a,b)=>new Date(b['日付']||b.date||0)-new Date(a['日付']||a.date||0));
@@ -2031,7 +2047,7 @@ function changePrintMode() {
 }
 
 function printRecentMenus(n) {
-  const count = n || 6;
+  const count = n || 8;
   const sorted = [...allMenus].sort((a,b) =>
     new Date(b['日付']||b.date||0) - new Date(a['日付']||a.date||0)
   ).slice(0, count);
@@ -2071,7 +2087,7 @@ function renderPrintSelectList() {
     const partName = (parts.find(p => p.ID == m['種目']) || {})['パート'] || '';
     const note = m['一言'] || m.note || '';
     const dist = (m['トータル距離'] || m.dist || 0).toLocaleString();
-    const disabled = (!checked && _printSelectIds.size >= 6) ? 'disabled' : '';
+    const disabled = (!checked && _printSelectIds.size >= 8) ? 'disabled' : '';
     return `<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid ${checked ? 'var(--blue)' : 'var(--border)'};border-radius:8px;cursor:pointer;background:${checked ? 'var(--blue-light)' : 'white'};opacity:${disabled?'0.45':'1'}">
       <input type="checkbox" ${checked?'checked':''} ${disabled} onchange="togglePrintSelect('${key}', this)"
         style="width:16px;height:16px;accent-color:var(--blue);flex-shrink:0">
@@ -2082,12 +2098,12 @@ function renderPrintSelectList() {
     </label>`;
   }).join('');
 
-  document.getElementById('print-select-count').textContent = `${_printSelectIds.size} / 6 件選択`;
+  document.getElementById('print-select-count').textContent = `${_printSelectIds.size} / 8 件選択`;
 }
 
 function togglePrintSelect(key, checkbox) {
   if (checkbox.checked) {
-    if (_printSelectIds.size < 6) _printSelectIds.add(key);
+    if (_printSelectIds.size < 8) _printSelectIds.add(key);
     else checkbox.checked = false;
   } else {
     _printSelectIds.delete(key);
